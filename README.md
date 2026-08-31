@@ -190,7 +190,6 @@ archforge/
 ├── server/       # Backend y servidor de la VM
 ├── vm/           # Recursos de la VM (no incluidos en Git)
 │   ├── base.qcow2           # Descargar de Releases
-│   ├── alpine-virt-*.iso    # Descargar de Releases
 │   ├── build/               # Logs (generado localmente)
 │   └── runtime/             # Temporales (generado localmente)
 ├── tools/        # Herramientas auxiliares
