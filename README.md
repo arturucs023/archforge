@@ -97,7 +97,7 @@ El frontend funciona de forma independiente (sin VM) para la mayoria de funciona
 ### Solo frontend
 
 ```bash
-git clone https://github.com/TU_USUARIO/archforge.git
+git clone https://github.com/arturucs023/archforge.git
 cd archforge
 npm install
 npm run dev
@@ -142,11 +142,30 @@ sudo pacman -S qemu-full
 
 ### Recursos de la VM
 
-Las imagenes de la maquina virtual (`.qcow2`, `.iso`, etc.) no se almacenan en el repositorio debido a su tamano.
+Las imagenes de la maquina virtual no se almacenan en el repositorio por su tamano. Se distribuyen mediante **GitHub Releases**.
 
-Se distribuyen mediante **GitHub Releases**.
+Para utilizar el laboratorio VM real:
 
-Consulta la seccion [Laboratorio VM real](#laboratorio-vm-real) para obtener los recursos necesarios.
+1. Descarga los archivos de la ultima [Release](https://github.com/arturucs023/archforge/releases)
+2. Colocalos en la carpeta `vm/`
+
+```text
+vm/
+├── base.qcow2              # Disco base (descargar de Releases)
+├── alpine-virt-*.iso       # ISO de Alpine (descargar de Releases)
+├── build/                  # Logs generados (NO subir a Git)
+└── runtime/                # Archivos temporales de ejecucion (NO subir a Git)
+```
+
+| Archivo | Origen | En Git |
+|---------|--------|--------|
+| `base.qcow2` | Releases | No |
+| `alpine-virt-*.iso` | Releases | No |
+| `build/` | Generado localmente | No |
+| `runtime/` | Generado localmente | No |
+| `*.qcow2` (overlay) | Generado localmente | No |
+
+**Nota:** Si solo quieres usar la terminal simulada (sandbox) o el contenido de las guias, no necesitas descargar nada de Releases. La VM es opcional.
 
 ---
 
@@ -170,6 +189,10 @@ archforge/
 ├── src/          # Frontend React
 ├── server/       # Backend y servidor de la VM
 ├── vm/           # Recursos de la VM (no incluidos en Git)
+│   ├── base.qcow2           # Descargar de Releases
+│   ├── alpine-virt-*.iso    # Descargar de Releases
+│   ├── build/               # Logs (generado localmente)
+│   └── runtime/             # Temporales (generado localmente)
 ├── tools/        # Herramientas auxiliares
 ├── qa/           # Tests
 └── script/       # Scripts de ejecucion
@@ -225,6 +248,11 @@ El proyecto se encuentra actualmente en desarrollo activo.
 - Mejoras del laboratorio VM
 
 ---
+
+## License
+
+This project is licensed under the MIT License.
+See the [LICENSE](LICENSE) file for details.
 
 ## License
 
