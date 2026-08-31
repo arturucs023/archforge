@@ -152,7 +152,6 @@ Para utilizar el laboratorio VM real:
 ```text
 vm/
 ├── base.qcow2              # Disco base (descargar de Releases)
-├── alpine-virt-*.iso       # ISO de Alpine (descargar de Releases)
 ├── build/                  # Logs generados (NO subir a Git)
 └── runtime/                # Archivos temporales de ejecucion (NO subir a Git)
 ```
