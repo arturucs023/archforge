@@ -1,0 +1,208 @@
+import type { BashProject } from './types'
+
+export const BASH_PROJECTS: BashProject[] = [
+  {
+    id: 'p1-primer-script',
+    num: 'P1', title: 'Mi primer script',
+    level: 'beginner', minutes: 15,
+    goal: 'Crear, permisionar y ejecutar un script que se presente y muestre información del sistema.',
+    requirements: [
+      'Shebang #!/usr/bin/env bash en la primera línea',
+      'Comentar el propósito con #',
+      'Imprimir usuario ($USER) y fecha (date)',
+      'Terminar con exit 0',
+    ],
+    concepts: ['scripts', 'shebang', 'chmod +x', 'echo'],
+    starter: {
+      filename: 'presentacion.sh',
+      content: '#!/usr/bin/env bash\n# TODO: imprime tu presentación y datos del sistema\n\necho "…"\n',
+    },
+    solution: {
+      filename: 'presentacion.sh',
+      content: '#!/usr/bin/env bash\n# Presentación básica del sistema\n\necho "Hola, soy $USER"\necho "Fecha: $(date)"\necho "Estoy en $(pwd)"\n\nexit 0\n',
+    },
+    verify: ['chmod +x presentacion.sh && ./presentacion.sh', 'echo $?   # debe ser 0'],
+  },
+  {
+    id: 'p2-calculadora',
+    num: 'P2', title: 'Calculadora Bash',
+    level: 'beginner', minutes: 25,
+    goal: 'Calculadora por argumentos: ./calc.sh NUM1 OPERADOR NUM2 con validación de entrada.',
+    requirements: [
+      'Exigir exactamente 3 argumentos (uso + exit 2 si no)',
+      'Soportar + - * / usando case',
+      'División entre cero → error por stderr y exit 1',
+      'Aritmética con $(( )) (o awk para decimales)',
+    ],
+    concepts: ['argumentos', 'case', 'aritmética', 'exit codes', 'stderr'],
+    starter: {
+      filename: 'calc.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\n[ "$#" -eq 3 ] || { echo "uso: $0 NUM OP NUM" >&2; exit 2; }\n\nA="$1" OP="$2" B="$3"\n\n# TODO: case "$OP" in … esac con + - * / \n',
+    },
+    solution: {
+      filename: 'calc.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\n[ "$#" -eq 3 ] || { echo "uso: $0 NUM OP NUM" >&2; exit 2; }\n\nA="$1" OP="$2" B="$3"\n\ncase "$OP" in\n  +) echo "$(( A + B ))" ;;\n  -) echo "$(( A - B ))" ;;\n  x|X|\\*) echo "$(( A * B ))" ;;\n  /)\n    [ "$B" -eq 0 ] && { echo "error: división por cero" >&2; exit 1; }\n    echo "$(( A / B ))"\n    ;;\n  *) echo "operador inválido: $OP (+ - * /)" >&2; exit 2 ;;\nesac\n',
+    },
+    verify: ['./calc.sh 7 x 6   # → 42', './calc.sh 5 / 0   # → error, exit 1', './calc.sh          # → uso, exit 2'],
+  },
+  {
+    id: 'p3-organizador',
+    num: 'P3', title: 'Organizador de archivos',
+    level: 'intermediate', minutes: 35,
+    goal: 'Script que ordena una carpeta moviendo cada archivo a subcarpetas por extensión (img/, docs/, otros/).',
+    requirements: [
+      'Aceptar la carpeta objetivo como $1 y validar que sea directorio (-d)',
+      'Iterar SOLO archivos regulares del primer nivel (for + glob + [ -f ])',
+      'Clasificar por extensión ${F##*.} (minúsculas con ,,)',
+      'Crear categorías al vuelo (mkdir -p) y mover con mv --',
+      'Contar cuántos movió e informar',
+    ],
+    concepts: ['arrays/globbing', '${VAR##*.}', 'mkdir -p', 'mv --', 'contador', 'validación -d'],
+    starter: {
+      filename: 'organiza.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nDIR="${1:?uso: $0 <carpeta>}"\n[ -d "$DIR" ] || { echo "no es directorio" >&2; exit 1; }\n\ncd "$DIR"\nmovidos=0\n\n# TODO: for f in * → clasifica por extensión y mv a img/ docs/ otros/\n',
+    },
+    solution: {
+      filename: 'organiza.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nDIR="${1:?uso: $0 <carpeta>}"\n[ -d "$DIR" ] || { echo "no es directorio" >&2; exit 1; }\n\ncd "$DIR"\nmovidos=0\n\nfor f in *; do\n  [ -f "$f" ] || continue\n  ext="${f##*.}"\n  ext="${ext,,}"\n  case "$ext" in\n    png|jpg|jpeg|gif|webp) cat_="img" ;;\n    pdf|txt|md|docx|odt)   cat_="docs" ;;\n    *)                     cat_="otros" ;;\n  esac\n  mkdir -p "$cat_"\n  mv -- "$f" "$cat_/"\n  movidos=$((movidos + 1))\ndone\n\necho "movidos: $movidos"\n',
+    },
+    verify: ['mkdir demo && touch demo/a.PNG demo/b.md demo/c.xyz', './organiza.sh demo', 'find demo -type f | sort'],
+  },
+  {
+    id: 'p4-buscador',
+    num: 'P4', title: 'Buscador de archivos y texto',
+    level: 'intermediate', minutes: 30,
+    goal: 'Herramienta que busca por NOMBRE (find) y opcionalmente dentro del CONTENIDO (grep -r), mostrando resultados claros.',
+    requirements: [
+      'Uso: buscador.sh [-c] PATRÓN [DIRECTORIO] (getopts o shift manual para -c contenido)',
+      'Nombre: find DIR -iname "*patrón*" filtrando errores',
+      'Contenido: grep -rn -- patrón DIR',
+      'Sin coincidencias → mensaje amable y exit 1',
+    ],
+    concepts: ['getopts', 'find -iname', 'grep -rn --', 'exit codes semánticos', 'contadores'],
+    starter: {
+      filename: 'buscador.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nMODO="nombre"\n# TODO: parsear -c (contenido), PATRÓN y DIR (default .)\n\n',
+    },
+    solution: {
+      filename: 'buscador.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nMODO="nombre"\nwhile getopts ":c" o; do\n  case "$o" in c) MODO="contenido" ;; *) echo "uso: $0 [-c] PATRÓN [DIR]" >&2; exit 2 ;; esac\ndone\nshift $((OPTIND-1))\n\nPATRON="${1:?falta patrón}"\nDIR="${2:-.}"\n\nencontrados=0\ncase "$MODO" in\n  nombre)\n    while IFS= read -r -d "" f; do\n      echo "$f"\n      encontrados=$((encontrados+1))\n    done < <(find "$DIR" -type f -iname "*$PATRON*" -print0)\n    ;;\n  contenido)\n    while IFS= read -r line; do\n      echo "$line"\n      encontrados=$((encontrados+1))\n    done < <(grep -rn -- "$PATRON" "$DIR")\n    ;;\nesac\n\nif [ "$encontrados" -eq 0 ]; then\n  echo "sin coincidencias para «$PATRON»" >&2\n  exit 1\nfi\necho "--- $encontrados resultado(s) ---"\n',
+    },
+    verify: ['./buscador.sh conf /etc | tail -3', './buscador.sh -c localhost /etc/hosts', './buscador.sh zzzz-no-existe; echo $?'],
+  },
+  {
+    id: 'p5-log-analyzer',
+    num: 'P5', title: 'Analizador de logs (grep/sed/awk)',
+    level: 'intermediate', minutes: 40,
+    goal: 'Informe automático sobre un log: totales por nivel, top IPs y errores de la última hora.',
+    requirements: [
+      'Formato asumido: FECHA HORA NIVEL MENSAJE…',
+      'Conteo por nivel con grep -c o awk',
+      'Top 3 IPs con cut|sort|uniq -c|sort -rn|head',
+      'Errores de las últimas 24h filtrando fecha $(date -d "yesterday" +%F) (opcional avanzado)',
+    ],
+    concepts: ['grep -c', 'cut/sort/uniq', 'awk BEGIN/END acumuladores', 'date arithmetic'],
+    starter: {
+      filename: 'loginfo.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nLOG="${1:?uso: $0 <app.log>}"\n[ -f "$LOG" ] || { echo "no existe $LOG" >&2; exit 1; }\n\n# TODO: niveles · top ips · resumen END\n',
+    },
+    solution: {
+      filename: 'loginfo.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nLOG="${1:?uso: $0 <app.log>}"\n[ -f "$LOG" ] || { echo "no existe $LOG" >&2; exit 1; }\n\necho "== niveles =="\nfor niv in INFO WARN ERROR; do\n  printf "%-6s %s\\n" "$niv:" "$(grep -cw "$niv" "$LOG")"\ndone\n\necho "== top 3 IPs =="\ngrep -Eo "^[0-9]+(\\.[0-9]+){3}" "$LOG" | sort | uniq -c | sort -rn | head -3\n\necho "== resumen =="\nawk \'{n[$3]++} END {for (k in n) printf "%s: %d\\n", k, n[k]}\' "$LOG"\n',
+    },
+    verify: ['printf "2026-01-01 10:00 INFO arranque\\n1.2.3.4 ERROR caída\\n1.2.3.4 ERROR retry\\n" > app.log', './loginfo.sh app.log'],
+  },
+  {
+    id: 'p6-monitor',
+    num: 'P6', title: 'Monitor del sistema',
+    level: 'expert', minutes: 40,
+    goal: 'Snapshot de salud: CPU/mem/disco/procesos-top con umbral de alerta configurable y salida formateada.',
+    requirements: [
+      '-t UMBRAL para alerta de disco (default 85) vía getopts',
+      'free -h, df -h, uptime y top-5 procesos por CPU',
+      'Alerta stderr + exit 1 si algún FS supera el umbral (awk gsub %)',
+      'Salida legible con printf alineado',
+    ],
+    concepts: ['free/df/ps', 'awk gsub + comparación', 'printf formato', 'getopts + exit semantics'],
+    starter: {
+      filename: 'monitor.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nUMBRAL=85\n# TODO: getopts -t, secciones del informe, alerta por disco\n',
+    },
+    solution: {
+      filename: 'monitor.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nUMBRAL=85\nwhile getopts ":t:h" o; do\n  case "$o" in t) UMBRAL="$OPTARG" ;; h) echo "uso: $0 [-t pct]" ; exit 0 ;; \\?) exit 2 ;; esac\ndone\n\necho "=== memoria ==="\nfree -h | head -2\n\necho "=== carga ==="\nuptime\n\necho "=== top CPU ==="\nps aux --sort=-%cpu | head -6\n\necho "=== discos (alerta > ${UMBRAL}%) ==="\nalerta=0\nwhile read -r fs uso montado; do\n  printf "%-22s %5s%%  %s\\n" "$fs" "${uso%\\%}" "$montado"\n  if [ "${uso%\\%}" -ge "$UMBRAL" ]; then\n    echo "ALERTA: $fs al $uso" >&2\n    alerta=1\n  fi\ndone < <(df -hP --output=source,pcent,target -x tmpfs -x devtmpfs | tail -n +2)\n\nexit "$alerta"\n',
+    },
+    verify: ['./monitor.sh            # verde normal', './monitor.sh -t 1       # fuerza alertas, exit != 0'],
+  },
+  {
+    id: 'p7-backup',
+    num: 'P7', title: 'Script de backup',
+    level: 'expert', minutes: 45,
+    goal: 'Backups tar.gz rotativos: origen→destino, timestamp único, retención N copias y log de cada corrida.',
+    requirements: [
+      'Uso: backup.sh ORIGEN DESTINO [RETENCION=5] validado todo',
+      'Nombre con $(date +%F_%H%M%S); exclusión de basura (--exclude)',
+      'trap EXIT para limpiar el .tmp parcial si algo falla',
+      'Rotación: borrar los más viejos dejando RETENCION (ls -t | tail -n +N)',
+      'Registro append-only con fecha y tamaño final',
+    ],
+    concepts: ['tar czvf + exclude', 'mktemp/trap', '$(date …)', 'rotación sort -r/tail', 'logging append'],
+    starter: {
+      filename: 'backup.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nORIGEN="${1:?falta origen}"\nDESTINO="${2:?falta destino}"\nRETENCION="${3:-5}"\n\n# TODO: validar origen, crear destino, tar temporal + trap, rotar, loggear\n',
+    },
+    solution: {
+      filename: 'backup.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nORIGEN="${1:?falta origen}"\nDESTINO="${2:?falta destino}"\nRETENCION="${3:-5}"\n\n[ -e "$ORIGEN" ] || { echo "origen inexistente" >&2; exit 1; }\nmkdir -p "$DESTINO"\n\nSTAMP=$(date +%F_%H%M%S)\nTMP="$DESTINO/.partial-$STAMP"\nFINAL="$DESTINO/backup-$STAMP.tar.gz"\ntrap \'rm -f "$TMP"\' EXIT\n\ntar -czf "$TMP" \\\n  --exclude=".cache" --exclude="node_modules" \\\n  -C "$(dirname "$ORIGEN")" "$(basename "$ORIGEN")"\n\nmv "$TMP" "$FINAL"\nSIZE=$(du -h "$FINAL" | cut -f1)\necho "$(date -Is) OK $FINAL ($SIZE)" >> "$DESTINO/backup.log"\n\n# rotación\nls -1t "$DESTINO"/backup-*.tar.gz 2>/dev/null | tail -n +$((RETENCION + 1)) | while read -r viejo; do\n  rm -- "$viejo"\n  echo "$(date -Is) ROTADO $viejo" >> "$DESTINO/backup.log"\ndone\n\ntrap - EXIT\nexit 0\n',
+    },
+    verify: ['./backup.sh ~/documentos /tmp/backups 2', 'ls -lh /tmp/backups', './backup.sh ~/documentos /tmp/backups 2 && ls -1t /tmp/backups/*.gz | wc -l   # sigue siendo ≤2'],
+  },
+  {
+    id: 'p8-mantenimiento-arch',
+    num: 'P8', title: 'Mantenimiento de Arch Linux',
+    level: 'expert', minutes: 50,
+    goal: 'Script interactivo real de mantenimiento Arch: update, limpieza, huérfanos, TRIM y health-check — con confirmaciones.',
+    requirements: [
+      'Modo estricto + menú de opciones (read + case) y opción -y para modo no-interactivo',
+      'update: pacman -Syu con --noconfirm solo si -y',
+      'limpieza: paccache -rk1 + journalctl vacuum + caché AUR',
+      'huérfanos: listar y pedir confirmación antes de -Rns',
+      'health: systemctl --failed, df raíz, último kernel vs instalado',
+    ],
+    concepts: ['menú case/read', 'sudo consciente', 'pacman/paccache/journalctl', '--noconfirm condicionado', 'comparar uname vs pacman'],
+    starter: {
+      filename: 'mantarch.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nASSUME_YES=0\n# TODO: getopts -y · funciones menu/update/limpieza/huerfanos/health · bucle principal\n',
+    },
+    solution: {
+      filename: 'mantarch.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nASSUME_YES=0\nwhile getopts ":y" o; do case "$o" in y) ASSUME_YES=1 ;; *) exit 2 ;; esac done\nshift $((OPTIND-1))\n\nconfirma() {\n  [ "$ASSUME_YES" = 1 ] && return 0\n  read -rp "$1 [s/N] " r\n  [[ "$r" =~ ^[sS]$ ]]\n}\n\nupdate() {\n  local flags=""\n  if confirma "¿Actualizar sistema completo?"; then flags="--noconfirm"; fi\n  sudo pacman -Sy archlinux-keyring --noconfirm\n  sudo pacman -Syu $flags\n}\n\nlimpieza() {\n  sudo paccache -rk1\n  sudo journalctl --vacuum-time=30d >/dev/null\n  echo "caché y journal recortados"\n}\n\nhuerfanos() {\n  mapfile -t orphans < <(pacman -Qtdq 2>/dev/null || true)\n  if [ "${#orphans[@]}" -eq 0 ]; then echo "sin huérfanos"; return 0; fi\n  printf "%s\\n" "${orphans[@]}"\n  if confirma "¿Eliminar ${#orphans[@]} huérfanos?"; then\n    sudo pacman -Rns --noconfirm "${orphans[@]}"\n  fi\n}\n\nhealth() {\n  echo "-- unidades fallidas --"\n  systemctl --failed --no-pager || true\n  echo "-- raíz --"\n  df -h / | tail -1\n  echo "kernel en ejecución: $(uname -r)"\n  echo "(reinicia si actualizaste linux hace poco)"\n}\n\nwhile true; do\n  printf "\\n=== MantArch ===\\n 1) update  2) limpieza  3) huérfanos  4) health  q) salir\\n"\n  read -rp "> " op\n  case "$op" in\n    1) update ;; 2) limpieza ;; 3) huerfanos ;; 4) health ;;\n    q|Q) exit 0 ;;\n    *) echo "opción inválida" >&2 ;;\n  esac\ndone\n',
+    },
+    verify: ['shellcheck mantarch.sh', './mantarch.sh -y <<< "q"   # arranca y sale limpio'],
+  },
+  {
+    id: 'pf-system-manager',
+    num: 'PF', title: 'PROYECTO FINAL — Linux System Manager',
+    level: 'expert', minutes: 120,
+    final: true,
+    goal: 'Menú centralizado que integre TODO el curso: sistema, paquetes, red, logs y backups con argumentos, funciones, arrays, manejo de errores y códigos de salida profesionales.',
+    requirements: [
+      'CLI: lsm.sh [-y] [-l LOGFILE] comando acción (sistema|paquetes|red|logs|backup)',
+      'Funciones puras por acción + logging con timestamps a archivo',
+      'Arrays para colecciones; grep/awk/pipes en los informes',
+      'Confirmaciones interactivas salvo -y; set -euo pipefail + trap',
+      'Exit codes documentados: 0 ok · 1 fallo operación · 2 uso incorrecto',
+      'README breve dentro del propio script (--help)',
+    ],
+    concepts: ['TODO el curso'],
+    starter: {
+      filename: 'lsm.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nVERSION="1.0"\nLOG="${HOME}/.local/share/lsm/lsm.log"\nASSUME_YES=0\nCMD=""; ACCION=""\n\nlog() { mkdir -p "$(dirname "$LOG")"; echo "$(date -Is) [$$] $*" >> "$LOG"; }\ndie() { echo "error: $*" >&2; exit "${2:-1}"; }\n\n# TODO: getopts (-y -l) · cmd_sistema/cmd_paquetes/cmd_red/cmd_logs/cmd_backup · dispatcher case · help\n\nusage() {\n  cat <<EOF\nLinux System Manager v$VERSION\nuso: $0 [-y] [-l LOG] <comando> <acción>\ncomandos: sistema | paquetes | red | logs | backup\n  -y        sin confirmaciones\n  -l FILE   ruta de log\nEOF\n}\n',
+    },
+    solution: {
+      filename: 'lsm.sh',
+      content: '#!/usr/bin/env bash\nset -euo pipefail\n\nVERSION="1.0"\nLOG="${HOME}/.local/share/lsm/lsm.log"\nASSUME_YES=0\n\nlog()  { mkdir -p "$(dirname "$LOG")"; echo "$(date -Is) $$ $*" >> "$LOG"; }\ndie()  { echo "error: $*" >&2; log "ERROR $*"; exit "${2:-1}"; }\nconfirma() { [ "$ASSUME_YES" = 1 ] && return 0; read -rp "$1 [s/N] "; [[ $REPLY =~ ^[sS]$ ]]; }\n\nusage() {\n  cat <<EOF\nLinux System Manager v$VERSION\nuso: $0 [-y] [-l LOG] <comando> <accion>\n  sistema  : info kernel/mem/disco\n  paquetes : lista | huerfanos\n  red      : ip | puertos | ping HOST\n  logs     : errores [N]\n  backup   : DIR_ORIGEN DESTINO\nexit: 0 ok · 1 fallo operacion · 2 uso\nEOF\n}\n\ncmd_sistema() {\n  echo "kernel : $(uname -r)"\n  free -h | awk \'NR<=2\'\n  df -h / | tail -1\n}\ncmd_paquetes() {\n  case "${1:-lista}" in\n    lista) pacman -Qe | wc -l | xargs -I{} echo "{} paquetes explícitos" ;;\n    huerfanos)\n      mapfile -t o < <(pacman -Qtdq 2>/dev/null || true)\n      echo "huérfanos: ${#o[@]}"\n      if [ "${#o[@]}" -gt 0 ] && confirma "¿eliminarlos?"; then sudo pacman -Rns --noconfirm "${o[@]}"; fi\n      ;;\n    *) die "acción de paquetes inválida" 2 ;;\n  esac\n}\ncmd_red() {\n  case "${1:-ip}" in\n    ip)      ip -brief address show | tail -n +1 ;;\n    puertos) ss -tuln | head -20 ;;\n    ping)    [ -n "${2:-}" ] || die "falta HOST" 2; ping -c3 "$2" ;;\n    *)       die "acción de red inválida" 2 ;;\n  esac\n}\ncmd_logs() {\n  local n="${1:-20}"\n  journalctl -p 3 -xn --no-pager | tail -"$n"\n}\ncmd_backup() {\n  local src="${1:?falta origen}" dst="${2:?falta destino}"\n  [ -e "$src" ] || die "origen no existe"\n  mkdir -p "$dst"\n  confirma "¿Backup de $src → $dst?" || { echo cancelado; return 0; }\n  local out="$dst/backup-$(date +%F_%H%M%S).tar.gz"\n  tar -czf "$out" -C "$(dirname "$src")" "$(basename "$src")"\n  log "BACKUP $out ($(du -h "$out" | cut -f1))"\n  echo "hecho: $out"\n}\n\n# ---------- dispatcher ----------\nwhile getopts ":yl:h" o; do\n  case "$o" in y) ASSUME_YES=1 ;; l) LOG="$OPTARG" ;; h) usage; exit 0 ;; *) usage >&2; exit 2 ;; esac\ndone\nshift $((OPTIND-1))\n\nCMD="${1:-}"; ACCION="${2:-}"\nif [ "$#" -ge 2 ]; then shift 2; else shift $#; fi\n\nlog "RUN $CMD $ACCION args=$*"\ncase "$CMD" in\n  sistema)  cmd_sistema ;;\n  paquetes) cmd_paquetes "$ACCION" ;;\n  red)      cmd_red "$ACCION" "$@" ;;\n  logs)     cmd_logs "$ACCION" ;;\n  backup)   cmd_backup "$ACCION" "${1:-}" ;;\n  *) usage >&2; exit 2 ;;\nesac\nlog "OK $CMD"\nexit 0\n',
+    },
+    verify: ['shellcheck lsm.sh && echo lint-ok', './lsm.sh sistema', './lsm.sh red ping archlinux.org', './lsm.sh -y backup ~/documentos /tmp/lsm-bk', './lsm.sh; echo $?   # 2 con usage'],
+  },
+]

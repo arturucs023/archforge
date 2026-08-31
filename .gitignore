@@ -1,0 +1,15 @@
+node_modules
+dist
+*.local
+.DS_Store
+
+# VM files (QEMU images, logs, runtime)
+vm/build/
+vm/runtime/
+*.qcow2
+*.img
+*.iso
+
+# Environment
+.env
+.env.*

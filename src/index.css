@@ -1,0 +1,314 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+    /* Acento por defecto = sky oficial (tripletes RGB para soportar opacidad) */
+    --af-sky-200: 186 230 253;
+    --af-sky-300: 125 211 252;
+    --af-sky-400: 56 189 248;
+    --af-sky-500: 14 165 233;
+    /* Neutras: valores por defecto = tema OSCURO actual */
+    --af-ink-950: 9 9 15;
+    --af-ink-900: 13 13 21;
+    --af-ink-850: 17 17 27;
+    --af-ink-800: 22 22 34;
+    --af-ink-700: 30 30 45;
+    --af-ink-600: 40 40 58;
+    --af-zinc-50: 250 250 250;
+    --af-zinc-100: 244 244 245;
+    --af-zinc-200: 228 228 231;
+    --af-zinc-300: 212 212 216;
+    --af-zinc-400: 161 161 170;
+    --af-zinc-500: 113 113 122;
+    --af-zinc-600: 82 82 91;
+    --af-zinc-700: 63 63 70;
+    --af-zinc-800: 39 39 42;
+    --af-zinc-900: 24 24 27;
+    /* Cromáticas semánticas: valores oficiales Tailwind (tema oscuro) */
+    --af-emerald-100: 209 250 229;
+    --af-emerald-200: 167 243 208;
+    --af-emerald-300: 110 231 183;
+    --af-emerald-400: 52 211 153;
+    --af-emerald-500: 16 185 129;
+    --af-emerald-600: 5 150 105;
+    --af-emerald-700: 4 120 87;
+    --af-violet-200: 221 214 254;
+    --af-violet-300: 196 181 253;
+    --af-violet-400: 167 139 250;
+    --af-violet-500: 139 92 246;
+    --af-violet-950: 46 16 101;
+    --af-teal-100: 204 251 241;
+    --af-teal-200: 153 246 228;
+    --af-teal-300: 94 234 212;
+    --af-teal-400: 45 212 191;
+    --af-teal-500: 20 184 166;
+    --af-teal-600: 13 148 136;
+    --af-amber-100: 254 243 199;
+    --af-amber-200: 253 230 138;
+    --af-amber-300: 252 211 77;
+    --af-amber-400: 251 191 36;
+    --af-amber-500: 245 158 11;
+    --af-rose-200: 254 205 211;
+    --af-rose-300: 253 164 175;
+    --af-rose-400: 251 113 133;
+    --af-rose-500: 244 63 94;
+    --af-rose-600: 225 29 72;
+    --af-cyan-300: 103 232 249;
+    --af-cyan-400: 34 211 238;
+    --af-cyan-500: 6 182 212;
+    --af-orange-400: 251 146 60;
+  }
+
+  /* ============================ TEMA CLARO ============================
+     Invierte las neutrales preservando la jerarquía visual y adapta la
+     escala del acento a tonos más oscuros para mantener contraste. */
+  [data-theme='light'] {
+    color-scheme: light;
+    --af-sky-200: 3 105 161;
+    --af-sky-300: 2 132 199;
+    --af-sky-400: 2 132 199;
+    --af-sky-500: 14 165 233;
+
+    --af-ink-950: 244 245 247;
+    --af-ink-900: 255 255 255;
+    --af-ink-850: 249 249 252;
+    --af-ink-800: 238 238 242;
+    --af-ink-700: 227 228 233;
+    --af-ink-600: 210 211 218;
+
+    --af-zinc-50: 24 24 27;
+    --af-zinc-100: 38 38 43;
+    --af-zinc-200: 55 55 62;
+    --af-zinc-300: 82 82 91;
+    --af-zinc-400: 110 110 119;
+    --af-zinc-500: 125 125 134;
+    --af-zinc-600: 150 150 159;
+    --af-zinc-700: 211 212 217;
+    --af-zinc-800: 227 228 232;
+    --af-zinc-900: 239 240 243;
+
+    /* Cromáticas: los tonos claros usados como texto se oscurecen a sus
+       equivalentes 600/700 para mantener contraste sobre blanco. */
+    --af-emerald-100: 6 95 70;
+    --af-emerald-200: 4 120 87;
+    --af-emerald-300: 4 120 87;
+    --af-emerald-400: 5 150 105;
+    --af-emerald-500: 5 150 105;
+
+    --af-violet-200: 109 40 217;
+    --af-violet-300: 109 40 217;
+    --af-violet-400: 124 58 237;
+
+    --af-teal-100: 17 94 89;
+    --af-teal-200: 15 118 110;
+    --af-teal-300: 15 118 110;
+    --af-teal-400: 13 148 136;
+
+    --af-amber-100: 146 64 14;
+    --af-amber-200: 180 83 9;
+    --af-amber-300: 180 83 9;
+    --af-amber-400: 217 119 6;
+
+    --af-rose-200: 190 18 60;
+    --af-rose-300: 190 18 60;
+    --af-rose-400: 225 29 72;
+
+    --af-cyan-300: 14 116 144;
+    --af-cyan-400: 8 145 178;
+
+    --af-orange-400: 194 65 12;
+  }
+  body {
+    @apply bg-ink-950 text-zinc-200 antialiased;
+    background-image: radial-gradient(1200px 500px at 50% -220px, rgba(56, 189, 248, 0.05), transparent);
+  }
+  ::selection {
+    @apply bg-sky-500/30 text-zinc-100;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-zinc-800;
+    border: 2px solid #0d0d15;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-zinc-700;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-zinc-800 bg-ink-900/70;
+  }
+  .kbd {
+    @apply rounded border border-zinc-700 bg-zinc-800/70 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400;
+  }
+}
+
+/* ============================ Cursor personalizado ============================
+   Flecha al estilo ArchForge: relleno tinta + contorno con el COLOR DE ACENTO
+   (variables --af-cur-* definidas en :root y actualizadas por src/lib/accent.ts).
+   Variantes: interactiva (relleno acento) y haz de texto. SVG nativo vía
+   data-URI: sin JS, sin retardo, ignorado en táctil. Colocado FUERA de @layer
+   para ganar a las utilidades Tailwind tipo cursor-pointer/cursor-text. */
+
+:root {
+  --af-cur-default: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'><path d='M5.5 3.2 V21.3 L10.2 16.6 L13.2 23.4 L16.6 21.9 L13.6 15.2 H20.9 Z' fill='%230b0e14' stroke='%2338bdf8' stroke-width='1.4' stroke-linejoin='round'/></svg>") 5 3, auto;
+  --af-cur-pointer: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'><path d='M5.5 3.2 V21.3 L10.2 16.6 L13.2 23.4 L16.6 21.9 L13.6 15.2 H20.9 Z' fill='%2338bdf8' stroke='%230c4a6e' stroke-width='1.4' stroke-linejoin='round'/></svg>") 5 3, pointer;
+  --af-cur-text: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='24' viewBox='0 0 28 24'><rect x='12.6' y='3' width='2.8' height='18' rx='1.4' fill='%2338bdf8' stroke='%230b0e14' stroke-width='1'/></svg>") 14 3, text;
+}
+
+/* flecha por defecto */
+html,
+body,
+body * {
+  cursor: var(--af-cur-default);
+}
+
+/* puntero interactivo sobre lo clicable */
+a,
+button,
+[role='button'],
+[role='checkbox'],
+[role='radio'],
+[role='tab'],
+[role='option'],
+summary,
+select,
+.cursor-pointer {
+  cursor: var(--af-cur-pointer) !important;
+}
+
+/* haz de texto sky en campos editables y zonas de texto */
+input,
+textarea,
+[contenteditable='true'],
+.cursor-text {
+  cursor: var(--af-cur-text) !important;
+}
+
+/* ==================== Entrada inicial sutil ====================
+   Se aplica una sola vez al cargar la app (el nodo raíz del Layout nunca se
+   desmonta al navegar). Sin fill-mode final: al terminar, el elemento queda
+   con sus estilos naturales (sin filter/transform residuales que crearían
+   un containing block y romperían los hijos fixed del Layout). */
+@keyframes afBoot {
+  from {
+    opacity: 0.82;
+    filter: blur(7px);
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+.af-boot {
+  animation: afBoot 520ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .af-boot {
+    animation: none;
+  }
+}
+
+/* ==================== Terminal Linux real (VM) — xterm.js ====================
+   xterm.js renderiza una terminal REAL con soporte ANSI completo,
+   cursor nativo, rendering GPU (WebGL), auto-resize. */
+
+/* Contenedor principal de xterm.js */
+.af-xterm-container {
+  position: relative;
+  overflow: hidden;
+}
+
+/* xterm.js llena su contenedor */
+.af-xterm-container .xterm {
+  height: 100%;
+  padding: 0 8px;
+}
+
+/* Scrollbar personalizada dentro de la terminal */
+.af-xterm-container .xterm-viewport::-webkit-scrollbar {
+  width: 6px;
+}
+.af-xterm-container .xterm-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+.af-xterm-container .xterm-viewport::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+.af-xterm-container .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Cursor estilo bar (como VS Code terminal) */
+.af-xterm-container .xterm .xterm-cursor-layer {
+  z-index: 10;
+}
+
+/* Selección con color acento */
+.af-xterm-container .xterm .xterm-selection {
+  opacity: 1;
+}
+.af-xterm-container .xterm .xterm-selection div {
+  background: rgba(56, 189, 248, 0.25) !important;
+}
+
+/* ==================== Zonas oscuras fijas (terminales) ====================
+   La terminal simulada y los bloques de código mantienen su fondo oscuro
+   incluso en tema claro (convención tipo editor). Dentro de estas zonas las
+   neutrales vuelven a sus valores oscuros para que el texto siga legible. */
+[data-theme='light'] .theme-dark-zone {
+  --af-ink-950: 9 9 15;
+  --af-ink-900: 13 13 21;
+  --af-ink-850: 17 17 27;
+  --af-ink-800: 22 22 34;
+  --af-ink-700: 30 30 45;
+  --af-ink-600: 40 40 58;
+  --af-zinc-50: 250 250 250;
+  --af-zinc-100: 244 244 245;
+  --af-zinc-200: 228 228 231;
+  --af-zinc-300: 212 212 216;
+  --af-zinc-400: 161 161 170;
+  --af-zinc-500: 113 113 122;
+  --af-zinc-600: 82 82 91;
+  --af-zinc-700: 63 63 70;
+  --af-zinc-800: 39 39 42;
+  --af-zinc-900: 24 24 27;
+}
+
+/* ==================== Cursor del sistema (opción desactivada) ====================
+   .no-custom-cursor en <html> restaura los cursores nativos. Va al final con
+   !important para ganar a las reglas de cursor personalizado de arriba. */
+html.no-custom-cursor,
+html.no-custom-cursor body,
+html.no-custom-cursor body * {
+  cursor: auto !important;
+}
+html.no-custom-cursor a,
+html.no-custom-cursor button,
+html.no-custom-cursor [role='button'],
+html.no-custom-cursor [role='checkbox'],
+html.no-custom-cursor [role='radio'],
+html.no-custom-cursor select,
+html.no-custom-cursor summary,
+html.no-custom-cursor .cursor-pointer {
+  cursor: pointer !important;
+}
+html.no-custom-cursor input,
+html.no-custom-cursor textarea,
+html.no-custom-cursor [contenteditable='true'],
+html.no-custom-cursor .cursor-text {
+  cursor: text !important;
+}
