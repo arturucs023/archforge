@@ -133,7 +133,7 @@ El frontend funciona de forma independiente (sin VM) para la mayoria de funciona
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/TU_USUARIO/archforge.git
+git clone https://github.com/arturucs023/archforge.git
 cd archforge
 
 # 2. Instalar dependencias
