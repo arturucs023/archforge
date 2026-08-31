@@ -159,7 +159,6 @@ vm/
 | Archivo | Origen | En Git |
 |---------|--------|--------|
 | `base.qcow2` | Releases | No |
-| `alpine-virt-*.iso` | Releases | No |
 | `build/` | Generado localmente | No |
 | `runtime/` | Generado localmente | No |
 | `*.qcow2` (overlay) | Generado localmente | No |
