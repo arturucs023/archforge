@@ -1,66 +1,33 @@
 # ArchForge
 
-**Guia interactiva completa para instalar, configurar, personalizar y mantener Arch Linux desde cero.**
+**Entorno de aprendizaje interactivo para aprender Arch Linux desde cero mediante guias, laboratorios, ejercicios y una terminal Linux real.**
 
-No es una wiki tradicional. Es un entorno de aprendizaje interactivo disenado para ensenar Arch Linux mediante explicaciones, decisiones, ejercicios y laboratorios praticos.
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18-61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
-## Caracteristicas principales
+## Demo
 
-### Guias de instalacion completas
-- 31 pasos documentados desde descargar la ISO hasta el primer arranque
-- Cada paso incluye: que se hace, por que, que significa el comando, que cambia en el sistema, como verificarlo, errores frecuentes y alternativas
-- Crear USB, UEFI, particionado, pacstrap, fstab, chroot, bootloader, locale, usuarios, red
+> Demo publica proximamente.
 
-### Arch Builder
-- Configurador personalizado que genera una ruta de instalacion segun tus elecciones
-- Hardware (NVIDIA/AMD/Intel), filesystem (ext4/Btrfs), bootloader, entorno grafico, shell, uso principal
-- Genera una guia paso a paso adaptada a tu configuracion, sin pasos irrelevantes
+---
 
-### Comparadores de decisiones
-- ext4 vs Btrfs, GRUB vs systemd-boot, KDE vs GNOME, Wayland vs X11, Bash vs Zsh vs Fish, y mas
-- Dificultad, ventajas, desventajas, rendimiento, compatibilidad, mantenimiento, recomendacion
+## Caracteristicas
 
-### Comandos interactivos
-- Bloques de comandos con boton **Copiar** que nunca copia los prefijos `$` o `#`
-- Modo Usuario normal / Root conmutable
-- Explicacion visual de cada flag de comandos importantes (pacman -Syu, etc.)
-- Comandos multilínea y comentarios gestionados correctamente
-- Bloques de output, warning, info, tip y danger
-
-### Comprobador de estado
-- Guia educativa para interpretar la salida de comandos de diagnostico
-- `lsblk`, `ip addr`, `uname -r`, `lspci -k`, `systemctl status`, `df -h`, `free -h` y mas
-- Explica que hace el comando, que informacion devuelve, que deberia aparecer y como interpretarla
-
-### Solucion de problemas
-- Buscador de problemas: "No tengo Internet", "NVIDIA no funciona", "Hyprland no inicia", "GRUB no aparece", etc.
-- Cada problema: sintomas, causas, diagnostico, comandos, solucion, alternativas y comprobacion final
-
-### Curso de Bash
-- 6 modulos progresivos con proyectos praticos
-- Desde fundamentos hasta scripting avanzado
-
-### Laboratorios CLI
-- Terminal Linux simulada en el navegador (sandbox aislado)
-- Laboratorios validados paso a paso con comandos reales
-- Filesystem virtual, permisos, pipes, redirecciones, grep/sed/awk
-
-### Linux real (VM)
-- Terminal xterm.js conectada via SSH a una VM Alpine Linux real mediante QEMU
-- Comandos reales en un entorno aislado y efimero
-- Opcion de restablecer (borra todos los cambios de la sesion)
-
-### Aprendizaje por niveles
-- Principiante: explicaciones claras y directas
-- Intermedio: detalles tecnicos adicionales
-- Experto: que ocurre internamente en Linux (systemd, kernel, VFS, syscalls)
-
-### Dashboard y progreso
-- Ruta visual de progreso: ISO -> Sistema base -> Red -> Drivers -> Entorno grafico -> Personalizacion
-- Pasos completados, porcentaje, nivel, tiempo estimado, racha de aprendizaje
-- Guardado automatico en localStorage con export/import
+- **Guias de instalacion completas** -- 31 pasos desde la ISO hasta el primer arranque, explicando que se hace, por que y que cambia en el sistema
+- **Arch Builder** -- Configurador que genera una ruta personalizada segun tu hardware, filesystem, bootloader y entorno grafico
+- **Comparadores de decisiones** -- ext4 vs Btrfs, GRUB vs systemd-boot, KDE vs GNOME, Wayland vs X11, Bash vs Zsh vs Fish
+- **Solucion de problemas** -- 50+ problemas comunes con sintomas, causas, diagnostico y soluciones paso a paso
+- **Comprobador de estado** -- Guia para interpretar la salida de comandos como `lsblk`, `ip addr`, `systemctl status` o `lspci -k`
+- **Curso de Bash** -- 6 modulos progresivos con proyectos praticos
+- **Terminal simulada (sandbox)** -- Linux aislado en el navegador para practicar sin riesgo
+- **Laboratorio VM real** -- Terminal xterm.js conectada via SSH a una VM Alpine Linux via QEMU
+- **Aprendizaje por niveles** -- Explicaciones adaptadas a principiante, intermedio o experto
+- **Dashboard y progreso** -- Ruta visual, pasos completados, tiempo estimado y racha de aprendizaje
+- **Buscador global** -- Encuentra comandos, paquetes, tutoriales y conceptos
 
 ---
 
@@ -70,12 +37,10 @@ No es una wiki tradicional. Es un entorno de aprendizaje interactivo disenado pa
 |------|------------|
 | Frontend | React 18, TypeScript, Vite 5 |
 | Estilos | TailwindCSS 3 |
-| Iconos | lucide-react |
-| Terminal virtual | xterm.js (sandbox) |
-| Terminal real | xterm.js + WebSocket + SSH2 + QEMU |
-| Backend VM | Node.js, ws, ssh2 |
+| Terminal | xterm.js (sandbox y VM real) |
+| Backend VM | Node.js, WebSocket (ws), SSH2 |
+| VM | QEMU + Alpine Linux |
 | Almacenamiento | localStorage |
-| Enrutamiento | Hash router personalizado |
 
 ---
 
@@ -110,8 +75,6 @@ ArchForge esta compuesto por un frontend React y un servidor Node.js que proporc
 └─────────────────────────────┘
 ```
 
-**Flujo de datos:**
-
 1. El usuario escribe comandos en xterm.js (browser)
 2. Los datos viajan por WebSocket al servidor Node.js
 3. El servidor los reenvia por SSH a la VM QEMU
@@ -121,166 +84,35 @@ El frontend funciona de forma independiente (sin VM) para la mayoria de funciona
 
 ---
 
-## Requisitos previos
+## Requisitos
 
-- [Node.js](https://nodejs.org/) 18+ (recomendado 20+)
+- [Node.js](https://nodejs.org/) 18+
 - npm 9+
 - **Opcional (para VM real):** [QEMU](https://www.qemu.org/download/) instalado y en PATH
 
 ---
 
-## Instalacion
+## Inicio rapido
+
+### Solo frontend
 
 ```bash
-# 1. Clonar el repositorio
-git clone https://github.com/arturucs023/archforge.git
+git clone https://github.com/TU_USUARIO/archforge.git
 cd archforge
-
-# 2. Instalar dependencias
 npm install
-
-# 3. Arrancar en modo desarrollo
 npm run dev
 ```
 
-El servidor de desarrollo arranca en `http://localhost:5173/`.
+Abre `http://localhost:5173`.
 
----
+### Con laboratorio VM
 
-## Scripts disponibles
+Requiere QEMU y los recursos de la VM proporcionados en la seccion de Releases.
 
-| Comando | Descripcion |
-|---------|-------------|
-| `npm run dev` | Servidor de desarrollo con hot reload |
-| `npm run build` | Compila TypeScript y genera la version de produccion en `dist/` |
-| `npm run serve` | Sirve la version de produccion en `http://127.0.0.1:4173` |
-| `npm start` | Build + lanza backend VM + frontend en produccion |
-| `npm run vm` | Lanza solo el servidor VM (requiere QEMU) |
-| `npm run dev:vm` | Desarrollo con servidor VM en paralelo |
-
----
-
-## Estructura del proyecto
-
+```bash
+npm install
+npm start
 ```
-archforge/
-├── index.html                  # Entry point HTML
-├── vite.config.ts              # Configuracion de Vite
-├── tailwind.config.js          # Configuracion de TailwindCSS
-├── tsconfig.json               # Configuracion de TypeScript
-├── package.json                # Dependencias y scripts
-│
-├── server/
-│   └── vm-server.mjs           # Backend VM: HTTP + WebSocket + SSH -> QEMU
-│
-├── script/
-│   └── start.mjs               # Script de inicio (build + VM + preview)
-│
-├── vm/
-│   ├── alpine-virt-*.iso       # ISO de Alpine Linux para la VM
-│   ├── base.qcow2              # Disco base de la VM
-│   ├── build/                  # Logs del servidor
-│   └── runtime/                # Overlay y PID de la sesion actual
-│
-├── src/
-│   ├── main.tsx                # Entry point de React
-│   ├── App.tsx                 # Router principal
-│   ├── index.css               # Estilos globales y variables CSS
-│   ├── types.ts                # Tipos TypeScript del dominio
-│   │
-│   ├── context/
-│   │   └── AppContext.tsx       # Estado global + localStorage
-│   │
-│   ├── lib/
-│   │   ├── router.ts           # Hash router
-│   │   ├── utils.ts            # Utilidades (cn, copyToClipboard, etc.)
-│   │   ├── accent.ts           # Sistema de acentos colormaticos
-│   │   ├── theme.ts            # Tema oscuro/claro
-│   │   ├── cursor.ts           # Cursor personalizado
-│   │   ├── streak.ts           # Racha de aprendizaje
-│   │   └── progress.ts         # Logica de progreso
-│   │
-│   ├── data/
-│   │   ├── sections.ts         # Metadata de todas las secciones
-│   │   ├── registry.ts         # Registro y contadores
-│   │   ├── content/            # Contenido de cada seccion (10 archivos)
-│   │   │   ├── fundamentals.ts
-│   │   │   ├── installation.ts
-│   │   │   ├── packages.ts
-│   │   │   ├── systemCore.ts
-│   │   │   ├── desktops.ts
-│   │   │   ├── shells.ts
-│   │   │   ├── tools.ts
-│   │   │   ├── devopsGaming.ts
-│   │   │   ├── maintenance.ts
-│   │   │   └── expert.ts
-│   │   ├── comparisons.ts      # Comparadores (ext4 vs Btrfs, etc.)
-│   │   ├── troubleshooting.ts  # Solucion de problemas (50+ problemas)
-│   │   ├── troubleshooting-*.ts
-│   │   ├── statusChecks.ts     # Comprobador de estado
-│   │   ├── builderLogic.ts     # Logica del Arch Builder
-│   │   ├── wizardTrees.ts      # Arboles de decision del wizard
-│   │   ├── learnData.ts        # Conceptos de aprendizaje
-│   │   ├── glossary.ts         # Glosario
-│   │   ├── helpers.ts          # Helpers de construccion de bloques
-│   │   ├── bashcourse/         # Curso de Bash (6 modulos)
-│   │   ├── cmdcenter/          # Centro de comandos
-│   │   └── servers/            # Cursos de servidores
-│   │
-│   ├── components/             # Componentes reutilizables (23)
-│   │   ├── Layout.tsx          # Layout principal con sidebar
-│   │   ├── Sidebar.tsx         # Navegacion lateral
-│   │   ├── Topbar.tsx          # Barra superior
-│   │   ├── Breadcrumbs.tsx     # Migas de pan + page headers
-│   │   ├── CommandBlock.tsx    # Bloques de comandos con Copiar
-│   │   ├── CommandBreakdown.tsx # Explicacion visual de flags
-│   │   ├── CommandCard.tsx     # Tarjeta de comandos
-│   │   ├── StepCard.tsx        # Tarjeta de pasos
-│   │   ├── Callout.tsx         # Bloques info/warning/danger
-│   │   ├── FileBlock.tsx       # Bloques de archivos de config
-│   │   ├── Quiz.tsx            # Quizzes interactivos
-│   │   ├── Exercise.tsx        # Ejercicios praticos
-│   │   ├── SearchModal.tsx     # Buscador global
-│   │   ├── VirtualTerminal.tsx # Terminal simulada (sandbox)
-│   │   ├── ProgressBar.tsx     # Barras de progreso
-│   │   ├── Wizard.tsx          # Wizard de decisiones
-│   │   ├── Tooltip.tsx         # Tooltips
-│   │   ├── Badge.tsx           # Badges/etiquetas
-│   │   └── ...
-│   │
-│   └── pages/                  # Paginas (14)
-│       ├── HomePage.tsx        # Landing page principal
-│       ├── Dashboard.tsx       # Dashboard de progreso
-│       ├── SectionPage.tsx     # Pagina de secciones de contenido
-│       ├── BuilderPage.tsx     # Arch Builder
-│       ├── ComparePage.tsx     # Comparadores
-│       ├── StatusCheckerPage.tsx # Comprobador de estado
-│       ├── TroubleshootingPage.tsx # Solucion de problemas
-│       ├── CommandCenterPage.tsx # Centro de comandos
-│       ├── BashCoursePage.tsx  # Curso de Bash
-│       ├── TerminalPage.tsx    # Terminal simulada
-│       ├── LearnPage.tsx       # Aprendizaje de conceptos
-│       ├── ServersPage.tsx     # Cursos de servidores
-│       ├── VMLabPage.tsx       # Laboratorio VM real
-│       └── SettingsPage.tsx    # Configuracion
-│
-└── dist/                       # Build de produccion (generado)
-```
-
----
-
-## Modo de desarrollo vs produccion
-
-### Desarrollo (`npm run dev`)
-- Hot reload instantaneo
-- Sin build
-- Mas rapido para iterar
-
-### Produccion (`npm start`)
-- Compila TypeScript
-- Genera bundle optimizado en `dist/`
-- Lanza el servidor VM en background (si QEMU esta disponible)
-- Abre `http://127.0.0.1:4173` en el navegador
 
 ---
 
@@ -308,6 +140,52 @@ sudo apt install qemu-system-x86
 sudo pacman -S qemu-full
 ```
 
+### Recursos de la VM
+
+Las imagenes de la maquina virtual (`.qcow2`, `.iso`, etc.) no se almacenan en el repositorio debido a su tamano.
+
+Se distribuyen mediante **GitHub Releases**.
+
+Consulta la seccion [Laboratorio VM real](#laboratorio-vm-real) para obtener los recursos necesarios.
+
+---
+
+## Scripts
+
+| Comando | Descripcion |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo con hot reload |
+| `npm run build` | Compila TypeScript y genera la version de produccion en `dist/` |
+| `npm run serve` | Sirve la version de produccion en `http://127.0.0.1:4173` |
+| `npm start` | Build + lanza backend VM + frontend en produccion |
+| `npm run vm` | Lanza solo el servidor VM (requiere QEMU) |
+| `npm run dev:vm` | Desarrollo con servidor VM en paralelo |
+
+---
+
+## Estructura del proyecto
+
+```
+archforge/
+├── src/          # Frontend React
+├── server/       # Backend y servidor de la VM
+├── vm/           # Recursos de la VM (no incluidos en Git)
+├── tools/        # Herramientas auxiliares
+├── qa/           # Tests
+└── script/       # Scripts de ejecucion
+```
+
+---
+
+## Seguridad
+
+El laboratorio VM esta disenado como un entorno aislado y efimero para practicas educativas.
+
+- La VM utiliza red aislada con SSH forwarding
+- Las sesiones pueden restablecerse completamente
+- Los cambios realizados durante una sesion no afectan el sistema anfitrion
+- No se recomienda almacenar informacion personal o sensible en la VM
+
 ---
 
 ## Guardado de progreso
@@ -319,50 +197,32 @@ sudo pacman -S qemu-full
 
 ---
 
-## Responsive
-
-La aplicacion funciona en:
-- Escritorio (1280px+)
-- Tablet (768px+)
-- Movil (320px+)
-
----
-
-## Tema
-
-- Modo oscuro como tema principal
-- Variables CSS para colores semanticos (ink, zinc, sky, emerald, etc.)
-- Paleta de acentos conmutable
-- Tipografia monoespaciada para comandos (JetBrains Mono)
-- Animaciones sutiles (fade-in, scale-in)
-
----
-
 ## Estado del proyecto
 
-ArchForge se encuentra actualmente en desarrollo activo.
+**ArchForge v1.0 -- Development**
 
-### Completado
+El proyecto se encuentra actualmente en desarrollo activo.
 
-- [x] Guias de instalacion (31 pasos)
-- [x] Arch Builder con ruta personalizada
-- [x] Comparadores de decisiones
-- [x] Solucion de problemas (50+ problemas)
-- [x] Comprobador de estado
-- [x] Curso de Bash (6 modulos)
-- [x] Terminal simulada (sandbox)
-- [x] Laboratorio VM real (QEMU + SSH)
-- [x] Sistema de progreso con localStorage
-- [x] Buscador global
-- [x] Modo de aprendizaje por niveles (principiante/intermedio/experto)
-- [x] Tema oscuro/claro
-- [x] Responsive
+### Implementado
 
-### En desarrollo
+- Guias de instalacion (31 pasos)
+- Arch Builder con ruta personalizada
+- Comparadores de decisiones
+- Solucion de problemas (50+ problemas)
+- Comprobador de estado
+- Terminal simulada (sandbox)
+- Laboratorio Linux real con QEMU + SSH
+- Curso de Bash (6 modulos)
+- Cursos de servidores
+- Sistema de progreso con localStorage
+- Buscador global
 
-- [ ] Contenido de secciones restantes
-- [ ] Mas laboratorios CLI
-- [ ] Mas cursos de servidores
+### Proximamente
+
+- Mas contenido de secciones
+- Mas laboratorios CLI
+- Mas cursos de servidores
+- Mejoras del laboratorio VM
 
 ---
 
