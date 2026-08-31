@@ -105,29 +105,28 @@ export default function HomePage() {
   return (
     <div className="animate-fade-in">
       {/* Hero */}
-      <header className="py-8 text-center sm:py-12">
-        <div className="mx-auto flex w-fit items-center gap-4">
-          <svg viewBox="0 0 32 32" className="h-14 w-14" aria-hidden>
+      <header className="pb-1 text-center">
+        <div className="mx-auto flex w-fit items-center gap-3">
+          <svg viewBox="0 0 32 32" className="h-10 w-10" aria-hidden>
             <rect width="32" height="32" rx="7" fill="#0d0d15" stroke="#2e2e42" />
             <path d="M16 5L4 26h24L16 5z" fill="none" stroke="#38bdf8" strokeWidth="2.4" strokeLinejoin="round" />
             <path d="M13 19h6M14.5 21.5h3" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <h1 className="font-mono text-4xl font-bold tracking-tight text-zinc-50 sm:text-5xl">ArchForge</h1>
+          <h1 className="font-mono text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl">ArchForge</h1>
         </div>
         <TypewriterSubtitle />
 
         {/* Progreso global */}
-        <div className="mx-auto mt-6 flex max-w-md items-center justify-center gap-3 rounded-full border border-zinc-800 bg-ink-900/70 px-4 py-2">
-          <Flame className="h-4 w-4 shrink-0 text-orange-400" />
+        <div className="mx-auto mt-2 flex max-w-xs items-center justify-center gap-2 rounded-full border border-zinc-800 bg-ink-900/70 px-3 py-1.5">
+          <Flame className="h-3.5 w-3.5 shrink-0 text-orange-400" />
           <ProgressBar value={globalDone} max={globalTotal} className="flex-1" />
-          <span className="font-mono text-xs tabular-nums text-zinc-400">{globalTotal ? Math.round((globalDone / globalTotal) * 100) : 0}%</span>
+          <span className="font-mono text-[11px] tabular-nums text-zinc-400">{globalTotal ? Math.round((globalDone / globalTotal) * 100) : 0}%</span>
         </div>
-        <p className="mt-1.5 font-mono text-[11px] text-zinc-600">progreso global · {globalDone}/{globalTotal} unidades</p>
       </header>
 
       {/* Bienvenida de retorno */}
       {welcomeDone && hasActivity && (
-        <section className="mx-auto mb-6 max-w-3xl animate-fade-in rounded-2xl border border-emerald-600/30 bg-emerald-500/[0.06] p-4 sm:p-5">
+        <section className="mx-auto mb-3 max-w-3xl animate-fade-in rounded-2xl border border-emerald-600/30 bg-emerald-500/[0.06] p-4 sm:p-5">
           <h2 className="text-base font-semibold text-emerald-200">Bienvenido de nuevo.</h2>
           <p className="mt-0.5 text-sm text-zinc-400">Continúa donde lo dejaste.</p>
           <button
@@ -145,7 +144,7 @@ export default function HomePage() {
       )}
 
       {/* Opciones principales */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {OPTIONS.map((o) => {
           const A = ACCENT[o.accent]
           const Icon = o.icon
@@ -154,18 +153,18 @@ export default function HomePage() {
               key={o.to}
               onClick={() => navigate(o.to)}
               className={cn(
-                'group flex cursor-pointer flex-col rounded-2xl border border-zinc-800 bg-ink-900/70 p-5 transition-all hover:-translate-y-0.5',
+                'group flex cursor-pointer flex-col rounded-2xl border border-zinc-800 bg-ink-900/70 p-4 transition-all hover:-translate-y-0.5',
                 A.border,
               )}
               role="link"
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && navigate(o.to)}
             >
-              <div className={cn('flex h-11 w-11 items-center justify-center rounded-xl border text-xl', A.icon)}>
+              <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl border text-lg', A.icon)}>
                 <span aria-hidden>{o.emoji}</span>
               </div>
-              <h3 className="mt-4 font-mono text-lg font-bold tracking-tight text-zinc-50">{o.title}</h3>
-              <p className="mt-1.5 flex-1 text-sm leading-relaxed text-zinc-400">{o.desc}</p>
+              <h3 className="mt-3 font-mono text-base font-bold tracking-tight text-zinc-50">{o.title}</h3>
+              <p className="mt-1 flex-1 text-sm leading-relaxed text-zinc-400">{o.desc}</p>
               {o.to === '/bash' && (() => {
                 const bash = areas.find((a) => a.id === 'bash')
                 return bash && bash.done > 0 ? (
@@ -178,7 +177,7 @@ export default function HomePage() {
               <button
                 onClick={(e) => { e.stopPropagation(); navigate(o.to) }}
                 tabIndex={-1}
-                className={cn('mt-4 inline-flex w-fit items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium transition-colors', A.btn)}
+                className={cn('mt-3 inline-flex w-fit items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors', A.btn)}
               >
                 {o.cta}
               </button>
@@ -189,19 +188,19 @@ export default function HomePage() {
         {/* Tarjeta extra: herramientas */}
         <article
           onClick={() => navigate('/settings')}
-          className="group flex cursor-pointer flex-col rounded-2xl border border-dashed border-zinc-700/70 bg-transparent p-5 transition-colors hover:border-zinc-500"
+          className="group flex cursor-pointer flex-col rounded-2xl border border-dashed border-zinc-700/70 bg-transparent p-4 transition-colors hover:border-zinc-500"
           role="link"
           tabIndex={0}
           onKeyDown={(e) => e.key === 'Enter' && navigate('/settings')}
         >
-          <Bug className="h-6 w-6 text-zinc-600 group-hover:text-zinc-400" />
-          <h3 className="mt-auto pt-4 font-mono text-sm font-semibold text-zinc-400">Progreso, ajustes y exportar datos</h3>
+          <Bug className="h-5 w-5 text-zinc-600 group-hover:text-zinc-400" />
+          <h3 className="mt-auto pt-3 font-mono text-sm font-semibold text-zinc-400">Progreso, ajustes y exportar datos</h3>
           <p className="mt-1 text-xs leading-relaxed text-zinc-600">Tu avance se guarda en este navegador. Gestiónalo en Ajustes.</p>
         </article>
       </div>
 
       {/* Barras por área */}
-      <section className="mt-10">
+      <section className="mt-8">
         <h2 className="mb-3 flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-zinc-500">
           Tu progreso por área
         </h2>
@@ -338,9 +337,9 @@ function WelcomeModal({ onDone }: { onDone: () => void }) {
     return () => { document.body.style.overflow = '' }
   }, [])
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" role="dialog" aria-modal="true" aria-label="¿Qué quieres hacer?">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-4 pt-10 pb-10" role="dialog" aria-modal="true" aria-label="¿Qué quieres hacer?">
       <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onDone} />
-      <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-700 bg-ink-850 p-6 shadow-2xl shadow-black/60 animate-scale-in">
+      <div className="relative w-full max-w-lg rounded-2xl border border-zinc-700 bg-ink-850 p-5 shadow-2xl shadow-black/60 animate-scale-in">
         <h2 className="font-mono text-xl font-bold text-zinc-50">¿Qué quieres hacer?</h2>
         <p className="mt-1 text-sm text-zinc-400">
           Elige un punto de partida. Podrás cambiar cuando quieras y tu progreso se guarda automáticamente.
