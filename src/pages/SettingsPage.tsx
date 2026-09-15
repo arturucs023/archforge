@@ -10,12 +10,14 @@ import { ACCENTS, applyAccent, DEFAULT_ACCENT, loadAccent, saveAccent } from '..
 import type { AccentId } from '../lib/accent'
 import { loadTheme, setTheme } from '../lib/theme'
 import type { ThemeMode } from '../lib/theme'
+import { usePractice } from '../lib/practice'
 import { loadCursorMode, setCursorMode, CURSOR_STYLES, CURSOR_SIZES, CURSOR_SIZE_MAP, CURSOR_COLORS, loadCursorSize, saveCursorSize, loadCursorGlow, saveCursorGlow, loadCursorOutline, saveCursorOutline, loadCursorColor, saveCursorColor } from '../lib/cursor'
 import type { CursorMode, CursorSize, CursorStyle } from '../lib/cursor'
 import ProgressBar from '../components/ProgressBar'
 
 export default function SettingsPage() {
   const { level, setLevel, shellMode, setShellMode, resetProgress, exportProgress, importProgress } = useApp()
+  const { resetPractice } = usePractice()
   const fileRef = useRef<HTMLInputElement>(null)
   const [msg, setMsg] = useState<string | null>(null)
   const [accent, setAccent] = useState<AccentId>(() => loadAccent())
@@ -450,7 +452,7 @@ export default function SettingsPage() {
               e.target.value = ''
             }}
           />
-          <ConfirmReset onReset={() => { resetProgress(); flash('Progreso reiniciado.') }} />
+          <ConfirmReset onReset={() => { resetProgress(); resetPractice(); flash('Progreso reiniciado (contenido y práctica).') }} />
         </div>
         <p className="mt-3 flex items-start gap-1.5 text-xs leading-relaxed text-zinc-500">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />

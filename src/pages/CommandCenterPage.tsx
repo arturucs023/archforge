@@ -4,6 +4,7 @@ import { CATS, EQUIVALENCES as PKG_EQUIVALENCIAS, SYMBOLS } from '../data/cmdcen
 import type { CatId } from '../data/cmdcenter/meta'
 import { COMMANDS } from '../data/cmdcenter/entries'
 import CommandCard from '../components/CommandCard'
+import CommandBuilder from '../components/practice/CommandBuilder'
 import DistributionSelector from '../components/DistributionSelector'
 import Breadcrumbs, { PageHeader } from '../components/Breadcrumbs'
 import Quiz from '../components/Quiz'
@@ -21,7 +22,7 @@ const PKG_CONCEPTS = [
   { q: 'Arch vs Ubuntu: la filosofía', a: 'Arch = rolling release con repos únicos + AUR comunitario; actualiza TODO junto (-Syu) y pronto. Ubuntu = releases estables con repos por versión; separa update/upgrade y congela versiones salvo parches de seguridad.', ejemplo: null },
 ]
 
-type Tab = 'explorar' | 'quiero' | 'simbolos' | 'equiv'
+type Tab = 'explorar' | 'quiero' | 'simbolos' | 'equiv' | 'constructor'
 
 const INTENT_EXAMPLES = [
   'Quiero buscar un archivo',
@@ -126,6 +127,7 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
             ['quiero', '¿Qué quieres hacer?'],
             ['simbolos', 'Símbolos del shell'],
             ['equiv', 'Arch ↔ Debian'],
+            ['constructor', 'Constructor'],
           ] as [Tab, string][]
         ).map(([t, label]) => (
           <button
@@ -355,6 +357,17 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
               </a>
             </aside>
           </div>
+        </div>
+      )}
+
+      {/* CONSTRUCTOR */}
+      {tab === 'constructor' && (
+        <div>
+          <p className="mb-4 flex items-start gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-3.5 text-sm leading-relaxed text-zinc-300">
+            <GitCompareArrows className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+            Aprende los flags marcándolos: el comando se genera solo y cada opción explica qué aporta.
+          </p>
+          <CommandBuilder />
         </div>
       )}
     </div>
