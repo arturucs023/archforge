@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight, BookOpen, Bug, Command as CommandIcon, Scale, Search, Server, SquareTerminal, Terminal, Activity } from 'lucide-react'
+import { ArrowRight, BookOpen, Bug, Command as CommandIcon, FlaskConical, Scale, Search, Server, SquareTerminal, Terminal, Activity } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { navigate } from '../lib/router'
 import { cn } from '../lib/utils'
@@ -12,9 +12,12 @@ import { COMMANDS } from '../data/cmdcenter/entries'
 import { CONCEPTS } from '../data/learnData'
 import { BASH_MODULES } from '../data/bashcourse'
 import { SERVER_COURSES } from '../data/servers'
+import { CHALLENGES } from '../data/practice/challenges'
+import { QUESTION_MAP } from '../data/practice/bank'
+import { catLabel } from '../lib/practice'
 
 interface Entry {
-  type: 'section' | 'step' | 'command' | 'problem' | 'compare' | 'diag' | 'term' | 'cmd' | 'concept' | 'lesson' | 'server'
+  type: 'section' | 'step' | 'command' | 'problem' | 'compare' | 'diag' | 'term' | 'cmd' | 'concept' | 'lesson' | 'server' | 'challenge'
   title: string
   subtitle: string
   to: string
@@ -33,6 +36,7 @@ const TYPE_META: Record<Entry['type'], { label: string; icon: React.ComponentTyp
   concept: { label: 'Fundamento', icon: BookOpen, color: 'text-violet-300' },
   lesson: { label: 'Curso Bash', icon: SquareTerminal, color: 'text-teal-300' },
   server: { label: 'Curso servidor', icon: Server, color: 'text-cyan-300' },
+  challenge: { label: 'Reto', icon: FlaskConical, color: 'text-orange-300' },
 }
 
 let INDEX_CACHE: Entry[] | null = null
@@ -144,6 +148,18 @@ function buildIndex(): Entry[] {
       subtitle: c.lab.objective,
       to: `/servers/${c.id}/lab`,
       haystack: `laboratorio lab practica ${c.id} ${c.title} ${c.keywords.join(' ')}`.toLowerCase(),
+    })
+  }
+
+  // Retos de práctica (título + categoría + preguntas)
+  for (const c of CHALLENGES) {
+    const qs = c.questions.map((id) => QUESTION_MAP.get(id)?.prompt ?? '').join(' ')
+    entries.push({
+      type: 'challenge',
+      title: `Reto: ${c.title}`,
+      subtitle: `${catLabel(c.cat)} · ${c.questions.length} preguntas`,
+      to: '/practice',
+      haystack: `${c.title} reto practica ${catLabel(c.cat)} ${qs}`.toLowerCase(),
     })
   }
 

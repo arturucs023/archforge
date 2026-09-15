@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   CircleDashed,
   Clock,
+  FlaskConical,
   Flame,
   Gauge,
   Trophy,
@@ -18,6 +19,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { REGISTRY, stepUnits, totalUnits, getSection } from '../data/registry'
+import { achievements, practiceStats, recommendNext, usePractice } from '../lib/practice'
 import { getIcon } from '../lib/icons'
 import { LEVEL_LABEL } from '../types'
 import { useApp } from '../context/AppContext'
@@ -92,7 +94,12 @@ const NET_ITINERARY = [
 
 export default function Dashboard() {
   const stats = useStats()
-  const { isDone, builderConfig, lastSection, resetProgress } = useApp()
+  const { isDone, builderConfig, lastSection, resetProgress, longestLearningStreak } = useApp()
+  const { practice, resetPractice } = usePractice()
+  const pStats = useMemo(() => practiceStats(practice), [practice])
+  const reco = useMemo(() => recommendNext(isDone, lastSection ?? undefined), [isDone, lastSection])
+  const arch = useMemo(() => achievements(isDone, practice, longestLearningStreak), [isDone, practice, longestLearningStreak])
+  const unlockedCount = arch.filter((a) => a.unlocked).length
 
   useEffect(() => {
     document.title = 'Arch Linux desde cero — ArchForge'
@@ -256,6 +263,78 @@ export default function Dashboard() {
         </ol>
       </section>
 
+      {/* Qué aprender ahora */}
+      {reco && (
+        <section className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl border border-sky-500/25 bg-gradient-to-br from-sky-500/10 to-transparent p-5">
+          <div className="min-w-0 flex-1">
+            <h2 className="font-mono text-[11px] font-bold uppercase tracking-widest text-sky-300">¿Qué aprender ahora?</h2>
+            <p className="mt-1 text-base font-semibold text-zinc-100">{reco.title}</p>
+            <p className="mt-0.5 text-sm text-zinc-400">{reco.reason}</p>
+            {reco.basis.length > 0 && (
+              <p className="mt-1 text-xs text-zinc-500">Ya dominas: {reco.basis.join(' · ')}</p>
+            )}
+          </div>
+          <button
+            onClick={() => navigate(`/section/${reco.sectionId}`)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-sky-500/50 bg-sky-500/10 px-4 py-2 text-sm font-medium text-sky-200 transition-colors hover:bg-sky-500/20"
+          >
+            Continuar <ArrowRight className="h-4 w-4" />
+          </button>
+        </section>
+      )}
+
+      {/* Práctica */}
+      <section className="mt-6 rounded-2xl border border-zinc-800 bg-ink-900/70 p-5 sm:p-6">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">
+            <FlaskConical className="h-4 w-4 text-sky-400" /> Tu práctica
+          </h2>
+          <button onClick={() => navigate('/practice')} className="text-xs font-medium text-sky-400 hover:text-sky-300">
+            Abrir práctica →
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-xl border border-zinc-800 bg-black/30 p-3 text-center">
+            <div className="font-mono text-lg font-bold text-zinc-100">{pStats.challengesDone}<span className="text-sm text-zinc-600">/{pStats.challengesTotal}</span></div>
+            <div className="mt-0.5 text-[11px] text-zinc-500">Retos</div>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-black/30 p-3 text-center">
+            <div className="font-mono text-lg font-bold text-zinc-100">{pStats.answered > 0 ? `${pStats.accuracy}%` : '—'}</div>
+            <div className="mt-0.5 text-[11px] text-zinc-500">Precisión</div>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-black/30 p-3 text-center">
+            <div className="font-mono text-lg font-bold text-zinc-100">{pStats.examsTaken > 0 ? `${pStats.examsTaken} · ${pStats.bestScore}` : '—'}</div>
+            <div className="mt-0.5 text-[11px] text-zinc-500">Exámenes · mejor</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Logros */}
+      <section className="mt-6 rounded-2xl border border-zinc-800 bg-ink-900/70 p-5 sm:p-6">
+        <h2 className="mb-3 flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">
+          <Trophy className="h-4 w-4 text-amber-400" /> Logros
+          <span className="ml-auto font-mono text-[11px] tabular-nums text-zinc-500">{unlockedCount}/{arch.length}</span>
+        </h2>
+        <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {arch.map((a) => (
+            <li
+              key={a.id}
+              title={a.desc}
+              className={cn(
+                'flex items-center gap-2.5 rounded-xl border p-3',
+                a.unlocked ? 'border-amber-500/30 bg-amber-500/[0.06]' : 'border-zinc-800/70 bg-black/20 opacity-55',
+              )}
+            >
+              <Trophy className={cn('h-4 w-4 shrink-0', a.unlocked ? 'text-amber-300' : 'text-zinc-700')} aria-hidden />
+              <span className="min-w-0">
+                <span className={cn('block truncate text-xs font-semibold', a.unlocked ? 'text-zinc-100' : 'text-zinc-500')}>{a.label}</span>
+                <span className="block truncate text-[11px] text-zinc-600">{a.desc}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       {/* Itinerario de redes */}
       <section className="mt-6 rounded-2xl border border-sky-500/20 bg-ink-900/70 p-5 sm:p-6">
         <h2 className="mb-1 flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">
@@ -349,7 +428,7 @@ export default function Dashboard() {
           Consejo: usa <kbd className="rounded border border-zinc-700 bg-zinc-800/70 px-1.5 py-0.5 font-mono text-[10px]">Ctrl K</kbd> para buscar
           cualquier comando o problema desde cualquier página.
         </p>
-        <ConfirmReset onReset={resetProgress} />
+        <ConfirmReset onReset={() => { resetProgress(); resetPractice() }} />
       </section>
     </div>
   )

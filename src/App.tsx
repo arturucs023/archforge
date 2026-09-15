@@ -13,6 +13,7 @@ import CommandCenterPage from './pages/CommandCenterPage'
 import BashCoursePage from './pages/BashCoursePage'
 import TerminalPage from './pages/TerminalPage'
 import LearnPage from './pages/LearnPage'
+import PracticePage from './pages/PracticePage'
 import ServersPage from './pages/ServersPage'
 import VMLabPage from './pages/VMLabPage'
 
@@ -46,6 +47,9 @@ export default function App() {
       break
     case 'learn':
       page = <LearnPage conceptId={a} />
+      break
+    case 'practice':
+      page = <PracticePage />
       break
     case 'servers':
       page = <ServersPage courseId={a} moduleId={b} />

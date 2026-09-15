@@ -11,6 +11,7 @@ const LABELS: Record<string, string> = {
   arch: 'Arch Linux desde cero',
   commands: 'Linux Command Center',
   learn: 'Aprender Linux',
+  practice: 'Practicar',
   troubleshooting: 'Solución de problemas',
   builder: 'Arch Builder',
   compare: 'Comparador',

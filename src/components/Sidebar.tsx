@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Hammer, Monitor, PanelLeftClose, Scale, Activity, LayoutDashboard, Server, SquareTerminal, GraduationCap, FlaskConical } from 'lucide-react'
+import { ChevronDown, Hammer, Monitor, PanelLeftClose, Scale, Activity, LayoutDashboard, Server, SquareTerminal, GraduationCap, FlaskConical, Target } from 'lucide-react'
 import { GROUPS, SECTIONS } from '../data/sections'
 import { REGISTRY, stepUnits } from '../data/registry'
 import { SERVER_COURSES, courseProgress, serverLabDoneId, serverModuleDoneId } from '../data/servers'
@@ -13,6 +13,7 @@ const TOOLS: { id: string; label: string; icon: typeof Hammer; to: string; desc:
   { id: 'commands', label: 'Command Center', icon: SquareTerminal, to: '/commands', desc: 'Cheatsheet Arch · Debian · Ubuntu' },
   { id: 'bash-course', label: 'Curso de Bash', icon: SquareTerminal, to: '/bash', desc: '27 módulos + proyectos' },
   { id: 'learn', label: 'Aprender Linux', icon: GraduationCap, to: '/learn', desc: 'Fundamentos con ejercicios' },
+  { id: 'practice', label: 'Practicar', icon: Target, to: '/practice', desc: 'Retos · examen · mapa · inspector' },
   { id: 'servers', label: 'Servicios y servidores', icon: Server, to: '/servers', desc: '9 cursos: DNS, SSH, Nginx…' },
   { id: 'vm-real', label: 'Linux real (VM)', icon: Monitor, to: '/vm', desc: '🖥️ Terminal Alpine real' },
   { id: 'terminal', label: 'Terminal interactiva', icon: FlaskConical, to: '/terminal', desc: 'CLI simulada + laboratorios' },
@@ -32,6 +33,7 @@ export default function Sidebar({ open, onClose, hidden = false, onToggle }: { o
       case 'arch': return 'arch'
       case 'commands': return 'commands'
       case 'learn': return 'learn'
+      case 'practice': return 'practice'
       case 'bash': return 'bash-course'
       case 'servers': return 'servers'
       case 'vm': return 'vm-real'
