@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, CircleCheck } from 'lucide-react'
 import type { Section } from '../types'
 import { LEVEL_LABEL } from '../types'
 import { getSection, prevNextSection, stepUnits } from '../data/registry'
+import { GROUPS } from '../data/sections'
 import { getIcon } from '../lib/icons'
 import { useApp } from '../context/AppContext'
 import { navigate } from '../lib/router'
@@ -36,7 +37,7 @@ export default function SectionPage({ sectionId, focusStep }: { sectionId: strin
     return (
       <div className="py-20 text-center text-zinc-400">
         Sección no encontrada.{' '}
-        <button className="text-sky-400" onClick={() => navigate('/')}>Volver al dashboard</button>
+        <button className="text-sky-400" onClick={() => navigate('/')}>Volver al inicio</button>
       </div>
     )
   }
@@ -60,6 +61,7 @@ function SectionView({
   const doneCount = units.filter((u) => isDone(u)).length
   const allDone = doneCount === units.length && units.length > 0
   const { prev, next } = prevNextSection(section.id)
+  const groupLabel = GROUPS.find((g) => g.id === section.group)?.label
 
   const toggleAll = () => {
     const target = !allDone
@@ -68,7 +70,7 @@ function SectionView({
 
   return (
     <div className="animate-fade-in">
-      <Breadcrumbs items={[{ label: section.title }]} />
+      <Breadcrumbs items={[...(groupLabel ? [{ label: groupLabel }] : []), { label: section.title }]} />
 
       <PageHeader
         title={section.title}

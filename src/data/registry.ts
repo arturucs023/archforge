@@ -10,6 +10,9 @@ import { tools } from './content/tools'
 import { devopsGaming } from './content/devopsGaming'
 import { maintenance } from './content/maintenance'
 import { expert } from './content/expert'
+import { networking1 } from './content/networking1'
+import { networking2 } from './content/networking2'
+import { networking3 } from './content/networking3'
 
 const CONTENT = {
   ...fundamentals,
@@ -21,6 +24,9 @@ const CONTENT = {
   ...devopsGaming,
   ...maintenance,
   ...expert,
+  ...networking1,
+  ...networking2,
+  ...networking3,
 } as Record<string, SectionContent>
 CONTENT['installation'] = installation
 

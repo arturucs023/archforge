@@ -159,6 +159,13 @@ export interface LinkListBlock extends BlockBase {
   type: 'links'
   links: { label: string; to: string }[]
 }
+/** Visualización interactiva de networking (comprensión, no laboratorio). */
+export type NetvizId = 'encap' | 'vlsm' | 'stp' | 'nat' | 'ospf' | 'bgp'
+export interface NetvizBlock extends BlockBase {
+  type: 'netviz'
+  viz: NetvizId
+  caption?: string
+}
 
 export type Block =
   | ParagraphBlock
@@ -171,6 +178,7 @@ export type Block =
   | InternalsBlock
   | FileBlock
   | LinkListBlock
+  | NetvizBlock
 
 /* ---------------------------------- Secciones -------------------------------- */
 

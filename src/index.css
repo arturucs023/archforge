@@ -301,6 +301,8 @@ html.no-custom-cursor button,
 html.no-custom-cursor [role='button'],
 html.no-custom-cursor [role='checkbox'],
 html.no-custom-cursor [role='radio'],
+html.no-custom-cursor [role='tab'],
+html.no-custom-cursor [role='option'],
 html.no-custom-cursor select,
 html.no-custom-cursor summary,
 html.no-custom-cursor .cursor-pointer {

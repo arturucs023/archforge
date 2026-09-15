@@ -28,23 +28,49 @@ export const MORE_COMMANDS: CommandEntry[] = [
   { id: 'rev', name: 'rev', cat: 'texto', distro: ['arch', 'debian'], summary: 'Invierte los caracteres de cada línea.', examples: [{ lines: ['echo "hola" | rev'] }], intents: ['invertir texto'] },
 
   /* ---------------------------------- red + ---------------------------------- */
-  { id: 'host', name: 'host', cat: 'red', distro: ['arch', 'debian'], summary: 'Consulta DNS minimalista (bind): host dominio [servidor].', examples: [{ lines: ['host archlinux.org'] }], intents: ['resolver dominio rapido'] },
-  { id: 'mtr', name: 'mtr', cat: 'red', distro: ['arch', 'debian'], summary: 'traceroute + ping en vivo: diagnóstico de ruta interactivo.', examples: [{ lines: ['mtr -rw archlinux.org'] }], intents: ['diagnosticar perdida paquetes'] },
+  { id: 'host', name: 'host', cat: 'red', distro: ['arch', 'debian'], summary: 'Consulta DNS minimalista (bind): host dominio [servidor].',
+    examples: [
+      { lines: ['host archlinux.org'] },
+      { desc: 'inversa y servidor concreto', lines: ['host 1.1.1.1', 'host ejemplo.com 9.9.9.9'] },
+    ],
+    related: ['dig', 'nslookup'],
+    intents: ['resolver dominio rapido'] },
+  { id: 'mtr', name: 'mtr', cat: 'red', distro: ['arch', 'debian'], summary: 'traceroute + ping en vivo: diagnóstico de ruta interactivo.', examples: [{ lines: ['mtr -rw archlinux.org'] }], related: ['traceroute', 'tracepath'], intents: ['diagnosticar perdida paquetes'] },
 
   /* ------------------------------- procesos + ------------------------------- */
   { id: 'nohup', name: 'nohup', cat: 'procesos', distro: ['arch', 'debian'], summary: 'Ejecuta inmune a colgaduras: sigue vivo aunque cierres la terminal (salida a nohup.out).', examples: [{ lines: ['nohup ./servidor.sh &'] }], intents: ['proceso sobreviva cierre terminal'], related: ['op-amp'] },
   { id: 'timeout', name: 'timeout', cat: 'procesos', distro: ['arch', 'debian'], important: true, summary: 'Limita la duración de un comando y lo mata al agotarse.', examples: [{ lines: ['timeout 10s ping archlinux.org', 'timeout -k 5 30 backup.sh'] }], intents: ['limitar tiempo comando', 'matar tras x segundos'] },
 
   /* -------------------------------- sistema + -------------------------------- */
-  { id: 'timedatectl', name: 'timedatectl', cat: 'sistema', distro: ['arch', 'debian'], summary: 'systemd: hora, zona horaria y NTP en un comando.', examples: [{ lines: ['timedatectl status', 'sudo timedatectl set-timezone Europe/Madrid'] }], intents: ['cambiar zona horaria', 'activar ntp'] },
+  { id: 'timedatectl', name: 'timedatectl', cat: 'sistema', distro: ['arch', 'debian'], summary: 'systemd: hora, zona horaria y NTP en un comando.',
+    breakdown: [
+      { token: 'status', meaning: 'hora local/universal, zona, NTP activo y sincronizado' },
+      { token: 'set-timezone Zona/Ciudad', meaning: 'fija zona (lista en timedatectl list-timezones)' },
+      { token: 'set-ntp true', meaning: 'activa sincronización NTP (chrony/systemd-timesyncd)' },
+    ],
+    examples: [
+      { lines: ['timedatectl status', 'sudo timedatectl set-timezone Europe/Madrid'] },
+      { desc: 'forzar NTP y comprobar sincronía', lines: ['sudo timedatectl set-ntp true', 'timedatectl show -p NTPSynchronized'] },
+    ],
+    errors: [{ symptom: 'System clock synchronized: no.', cause: 'Sin red al NTP (UDP/123) o servicio parado.', fix: 'systemctl status systemd-timesyncd/chronyd; abre UDP/123 en el firewall.' }],
+    intents: ['cambiar zona horaria', 'activar ntp', 'sincronizar hora', 'reloj sistema'] },
 
   /* -------------------------------- discos + -------------------------------- */
   {
     id: 'dd', name: 'dd', cat: 'discos', distro: ['arch', 'debian'], important: true,
     summary: 'Copia cruda byte a byte entre archivos/dispositivos. POTENTE Y PELIGROSO.',
+    breakdown: [
+      { token: 'if=', meaning: 'input file: ORIGEN (la ISO)' },
+      { token: 'of=', meaning: 'output file: DESTINO (¡el USB que se borra!)' },
+      { token: 'bs=4M', meaning: 'bloques de 4 MiB (rápido; no afecta al resultado)' },
+      { token: 'status=progress', meaning: 'barra de progreso (si no, parece colgado)' },
+      { token: 'conv=fsync', meaning: 'sincroniza al terminar (USB extraíble sin corrupción)' },
+    ],
     examples: [
       { desc: 'grabar ISO a USB (¡of= es el DESTINO!)', lines: ['sudo dd if=archlinux.iso of=/dev/sdX bs=4M status=progress conv=fsync'] },
     ],
+    verify: ['lsblk -f /dev/sdX'],
+    errors: [{ symptom: 'dd: failed to open: No such file or directory.', fix: 'El dispositivo cambió de letra (sdb→sdc): lista con lsblk justo antes.' }],
     warnNote: 'of=/dev/sda equivocado DESTRUYE ese disco sin preguntar. Verifica el dispositivo con lsblk dos veces antes de pulsar Enter.',
     intents: ['grabar iso usb', 'clonar disco crudo'],
   },
@@ -85,12 +111,14 @@ export const MORE_COMMANDS: CommandEntry[] = [
     id: 'env', name: 'env', cat: 'bash-shell', distro: ['arch', 'debian'], important: true,
     summary: 'Lista las variables de entorno actuales o ejecuta con entorno modificado.',
     examples: [{ lines: ['env | sort | head', 'EDITOR=vim env | grep EDITOR'] }],
+    related: ['printenv', 'export'],
     intents: ['ver variables entorno', 'listar entorno'],
   },
   {
     id: 'printenv', name: 'printenv', cat: 'bash-shell', distro: ['arch', 'debian'],
     summary: 'Imprime el valor de una variable de entorno concreta.',
     examples: [{ lines: ['printenv HOME', 'printenv PATH'] }],
+    related: ['env', 'export'],
     intents: ['valor variable entorno'],
   },
   {
@@ -113,6 +141,7 @@ export const MORE_COMMANDS: CommandEntry[] = [
     id: 'command', name: 'command', cat: 'bash-shell', distro: ['arch', 'debian'],
     summary: 'Ejecuta un comando evitando funciones/alias; -v revela dónde está.',
     examples: [{ lines: ['command -v ls', 'command ls   # fuerza el binario, no tu alias'] }],
+    related: ['type-cmd', 'hash', 'which'],
     intents: ['evitar alias', 'ejecutar binario directo'],
   },
   {

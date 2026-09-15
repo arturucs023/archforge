@@ -43,6 +43,7 @@ export default function CommandCard({ entry, defaultOpen }: { entry: CommandEntr
         <button
           role="checkbox"
           aria-checked={learned}
+          aria-label={learned ? `Marcar comando "${entry.name}" como no aprendido` : `Marcar comando "${entry.name}" como aprendido`}
           onClick={() => toggleDone(`cmd:${entry.id}`)}
           title={learned ? 'Marcar como no aprendido' : 'Marcar comando como aprendido'}
           className={cn(
@@ -89,7 +90,7 @@ export default function CommandCard({ entry, defaultOpen }: { entry: CommandEntr
       )}
 
       {/* Secciones profundas */}
-      {open && (entry.whatHappens || entry.expected || entry.verify?.length || entry.errors?.length || entry.alternatives?.length) && (
+      {open && (entry.whatHappens || entry.expected || entry.verify?.length || entry.errors?.length || entry.alternatives?.length || entry.related?.length) && (
         <div className="border-t border-zinc-800/70">
           {entry.whatHappens && (
             <Section label="¿Qué ocurre por dentro?">

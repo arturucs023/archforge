@@ -90,7 +90,7 @@ function buildIndex(): Entry[] {
       type: 'term',
       title: g.term,
       subtitle: g.definition,
-      to: '/expert',
+      to: '/section/expert',
       haystack: `${g.term} ${g.definition}`.toLowerCase(),
     })
   }

@@ -64,6 +64,7 @@ export default function Topbar({ onMenu, showOnDesktop = false }: { onMenu: () =
             active={shellMode === 'user'}
             onClick={() => setShellMode('user')}
             icon={<User className="h-3.5 w-3.5" />}
+            label="Modo usuario normal"
             hint='Los comandos se muestran como usuario normal con el prefijo $ (usa sudo cuando haga falta).'
           >
             Usuario
@@ -72,6 +73,7 @@ export default function Topbar({ onMenu, showOnDesktop = false }: { onMenu: () =
             active={shellMode === 'root'}
             onClick={() => setShellMode('root')}
             icon={<UserCog className="h-3.5 w-3.5" />}
+            label="Modo root"
             hint='Los comandos con sudo se muestran sin sudo, con el prefijo # (ya eres root). El resto no cambia.'
           >
             Root
@@ -193,18 +195,21 @@ function ShellModeButton({
   children,
   icon,
   hint,
+  label,
 }: {
   active: boolean
   onClick: () => void
   children: React.ReactNode
   icon: React.ReactNode
   hint: string
+  label: string
 }) {
   return (
     <span className="group/badge relative inline-flex">
       <button
         role="radio"
         aria-checked={active}
+        aria-label={label}
         onClick={onClick}
         className={cn(
           'inline-flex h-9 items-center gap-1.5 px-2.5 font-mono text-xs font-medium transition-colors',

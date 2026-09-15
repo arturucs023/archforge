@@ -9,6 +9,8 @@ import type {
   InternalsBlock,
   Level,
   ListBlock,
+  NetvizBlock,
+  NetvizId,
   OutputBlockT,
   ParagraphBlock,
   TableBlock,
@@ -58,6 +60,9 @@ export const deep = (title: string, text: string, points?: string[], minLevel?: 
 export const tbl = (headers: string[], rows: string[][]): TableBlock => ({ type: 'table', headers, rows })
 
 export const file = (filename: string, content: string, note?: string): FileBlock => ({ type: 'file', filename, content, note })
+
+/** Visualización interactiva de networking (se renderiza con NetvizRenderer). */
+export const viz = (vizId: NetvizId, caption?: string, minLevel?: Level): NetvizBlock => ({ type: 'netviz', viz: vizId, caption, minLevel })
 
 /** Extrae todos los comandos ejecutables de una lista de bloques (para el índice de búsqueda). */
 export function collectCommands(blocks: Block[] | undefined): string[] {

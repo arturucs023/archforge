@@ -5,6 +5,7 @@ import { useApp } from '../context/AppContext'
 import Callout from './Callout'
 import CommandBlock from './CommandBlock'
 import FileBlockView from './FileBlock'
+import NetvizRenderer from './netviz/NetvizRenderer'
 
 function visible(minLevel: Level | undefined, current: Level): boolean {
   return LEVEL_RANK[current] >= LEVEL_RANK[minLevel ?? 'beginner']
@@ -106,6 +107,8 @@ export default function Blocks({ blocks }: { blocks?: Block[] }) {
             )
           case 'file':
             return <FileBlockView key={i} block={b} />
+          case 'netviz':
+            return <NetvizRenderer key={i} viz={b.viz} caption={b.caption} />
           default:
             return null
         }

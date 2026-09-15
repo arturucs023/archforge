@@ -10,8 +10,8 @@ import { ACCENTS, applyAccent, DEFAULT_ACCENT, loadAccent, saveAccent } from '..
 import type { AccentId } from '../lib/accent'
 import { loadTheme, setTheme } from '../lib/theme'
 import type { ThemeMode } from '../lib/theme'
-import { loadCursorMode, setCursorMode } from '../lib/cursor'
-import type { CursorMode } from '../lib/cursor'
+import { loadCursorMode, setCursorMode, CURSOR_STYLES, CURSOR_SIZES, CURSOR_SIZE_MAP, CURSOR_COLORS, loadCursorSize, saveCursorSize, loadCursorGlow, saveCursorGlow, loadCursorOutline, saveCursorOutline, loadCursorColor, saveCursorColor } from '../lib/cursor'
+import type { CursorMode, CursorSize, CursorStyle } from '../lib/cursor'
 import ProgressBar from '../components/ProgressBar'
 
 export default function SettingsPage() {
@@ -21,6 +21,21 @@ export default function SettingsPage() {
   const [accent, setAccent] = useState<AccentId>(() => loadAccent())
   const [theme, setThemeState] = useState<ThemeMode>(() => loadTheme())
   const [cursorMode, setCursorModeState] = useState<CursorMode>(() => loadCursorMode())
+  const [cursorSize, setCursorSizeState] = useState<CursorSize>(() => loadCursorSize())
+  const [cursorGlow, setCursorGlowState] = useState(() => loadCursorGlow())
+  const [cursorOutline, setCursorOutlineState] = useState(() => loadCursorOutline())
+  const [cursorColor, setCursorColorState] = useState<string | null>(() => loadCursorColor())
+
+  const applyCursorSettings = (overrides?: Partial<{ mode: CursorMode; size: CursorSize; glow: boolean; outline: boolean; accentId: AccentId; color: string | null }>) => {
+    const m = overrides?.mode ?? cursorMode
+    const s = overrides?.size ?? cursorSize
+    const g = overrides?.glow ?? cursorGlow
+    const o = overrides?.outline ?? cursorOutline
+    const a = overrides?.accentId ?? accent
+    const c = overrides && 'color' in overrides ? overrides.color ?? null : cursorColor
+    const style = m === 'system' ? 'arrow' : (m as CursorStyle)
+    applyAccent(a, { style, size: s, glow: g, outline: o, color: c })
+  }
 
   const flash = (m: string) => {
     setMsg(m)
@@ -29,7 +44,7 @@ export default function SettingsPage() {
 
   const pickAccent = (id: AccentId) => {
     setAccent(id)
-    applyAccent(id) // en vivo, sin recarga
+    applyCursorSettings({ accentId: id })
     saveAccent(id)
   }
 
@@ -122,40 +137,197 @@ export default function SettingsPage() {
           })}
         </div>
 
-        <h3 id="accent-picker" className="mt-6 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
-          🖱️ Cursor de ArchForge
+        <h3 id="cursor-picker" className="mt-6 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+          🖱️ Cursor personalizado
         </h3>
-        <div className="flex max-w-md items-center justify-between gap-4 rounded-xl border border-zinc-800 bg-ink-900/60 p-3.5">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-zinc-200">Cursor personalizado</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">
-              Flecha y haz de texto con el color de acento. Al desactivarlo se usan los cursores nativos de tu sistema.
-            </p>
-          </div>
+
+        {/* Estilo */}
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6" role="radiogroup" aria-label="Estilo de cursor">
+          {CURSOR_STYLES.map((s) => {
+            const active = cursorMode === s.id
+            return (
+              <button
+                key={s.id}
+                role="radio"
+                aria-checked={active}
+                title={s.description}
+                onClick={() => {
+                  setCursorModeState(s.id)
+                  setCursorMode(s.id)
+                  applyCursorSettings({ mode: s.id })
+                }}
+                className={cn(
+                  'flex flex-col items-center gap-2 rounded-xl border p-3 transition-all',
+                  active ? 'border-sky-500/60 bg-sky-500/10' : 'border-zinc-800 bg-ink-900/60 hover:border-zinc-600',
+                )}
+              >
+                <span
+                  className={cn('h-6 w-6', active ? 'text-sky-400' : 'text-zinc-400')}
+                  dangerouslySetInnerHTML={{ __html: s.preview }}
+                />
+                <span className={cn('text-xs font-medium', active ? 'text-zinc-100' : 'text-zinc-400')}>{s.label}</span>
+              </button>
+            )
+          })}
           <button
-            role="switch"
-            aria-checked={cursorMode === 'custom'}
-            aria-label="Cursor personalizado de ArchForge"
+            role="radio"
+            aria-checked={cursorMode === 'system'}
             onClick={() => {
-              const next: CursorMode = cursorMode === 'custom' ? 'system' : 'custom'
-              setCursorModeState(next)
-              setCursorMode(next)
+              setCursorModeState('system')
+              setCursorMode('system')
+              applyCursorSettings({ mode: 'system' })
             }}
-            title={cursorMode === 'custom' ? 'Activado — clic para usar el cursor del sistema' : 'Desactivado — clic para activar el cursor de ArchForge'}
             className={cn(
-              'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors',
-              cursorMode === 'custom' ? 'border-sky-500/60 bg-sky-500/25' : 'border-zinc-700 bg-zinc-800/70',
+              'flex flex-col items-center gap-2 rounded-xl border p-3 transition-all',
+              cursorMode === 'system' ? 'border-sky-500/60 bg-sky-500/10' : 'border-zinc-800 bg-ink-900/60 hover:border-zinc-600',
             )}
           >
-            <span
-              aria-hidden
-              className={cn(
-                'absolute h-[18px] w-[18px] rounded-full transition-transform',
-                cursorMode === 'custom' ? 'translate-x-[24px] bg-sky-400' : 'translate-x-[3px] bg-zinc-400',
-              )}
-            />
+            <span className={cn('text-lg', cursorMode === 'system' ? 'text-sky-400' : 'text-zinc-400')}>⚙️</span>
+            <span className={cn('text-xs font-medium', cursorMode === 'system' ? 'text-zinc-100' : 'text-zinc-400')}>Sistema</span>
           </button>
         </div>
+
+        {/* Tamaño */}
+        {cursorMode !== 'system' && (
+          <>
+            <p className="mt-3 mb-1.5 text-xs text-zinc-500">Tamaño</p>
+            <div className="flex gap-1.5" role="radiogroup" aria-label="Tamaño del cursor">
+              {CURSOR_SIZES.map((sz) => {
+                const active = cursorSize === sz
+                const def = CURSOR_SIZE_MAP[sz]
+                return (
+                  <button
+                    key={sz}
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => {
+                      setCursorSizeState(sz)
+                      saveCursorSize(sz)
+                      applyCursorSettings({ size: sz })
+                    }}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
+                      active ? 'border-sky-500/60 bg-sky-500/10 text-sky-300' : 'border-zinc-800 bg-ink-900/60 text-zinc-400 hover:border-zinc-600',
+                    )}
+                  >
+                    <span>{def.label}</span>
+                    <span className={cn('text-[10px]', active ? 'text-sky-400/70' : 'text-zinc-600')}>{def.desc}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
+
+        {/* Brillo y contorno */}
+        {cursorMode !== 'system' && (
+          <div className="mt-3 flex flex-wrap gap-3">
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-ink-900/60 px-3 py-2 text-xs text-zinc-400 transition-all hover:border-zinc-600 has-[:checked]:border-sky-500/60 has-[:checked]:bg-sky-500/10 has-[:checked]:text-sky-300">
+              <input
+                type="checkbox"
+                checked={cursorGlow}
+                onChange={(e) => {
+                  setCursorGlowState(e.target.checked)
+                  saveCursorGlow(e.target.checked)
+                  applyCursorSettings({ glow: e.target.checked })
+                }}
+                className="sr-only"
+              />
+              <span className={cn('flex h-4 w-4 items-center justify-center rounded border', cursorGlow ? 'border-sky-500 bg-sky-500/25' : 'border-zinc-600 bg-zinc-800')}>
+                {cursorGlow && <span className="h-2 w-2 rounded-sm bg-sky-400" />}
+              </span>
+              ✨ Brillo
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-ink-900/60 px-3 py-2 text-xs text-zinc-400 transition-all hover:border-zinc-600 has-[:checked]:border-sky-500/60 has-[:checked]:bg-sky-500/10 has-[:checked]:text-sky-300">
+              <input
+                type="checkbox"
+                checked={cursorOutline}
+                onChange={(e) => {
+                  setCursorOutlineState(e.target.checked)
+                  saveCursorOutline(e.target.checked)
+                  applyCursorSettings({ outline: e.target.checked })
+                }}
+                className="sr-only"
+              />
+              <span className={cn('flex h-4 w-4 items-center justify-center rounded border', cursorOutline ? 'border-sky-500 bg-sky-500/25' : 'border-zinc-600 bg-zinc-800')}>
+                {cursorOutline && <span className="h-2 w-2 rounded-sm bg-sky-400" />}
+              </span>
+              🖊️ Contorno grueso
+            </label>
+          </div>
+        )}
+
+        {/* Color del cursor */}
+        {cursorMode !== 'system' && (
+          <>
+            <p className="mt-3 mb-1.5 text-xs text-zinc-500">Color (por defecto sigue al acento)</p>
+            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Color del cursor">
+              {CURSOR_COLORS.map((c) => {
+                const active = cursorColor === c.value
+                return (
+                  <button
+                    key={c.id}
+                    role="radio"
+                    aria-checked={active}
+                    title={c.value ? `Cursor en ${c.label}` : 'El cursor usa el color de acento actual'}
+                    onClick={() => {
+                      setCursorColorState(c.value)
+                      saveCursorColor(c.value)
+                      applyCursorSettings({ color: c.value })
+                    }}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all',
+                      active ? 'border-sky-500/60 bg-sky-500/10 text-sky-300' : 'border-zinc-800 bg-ink-900/60 text-zinc-400 hover:border-zinc-600',
+                    )}
+                  >
+                    <span
+                      aria-hidden
+                      className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-black/40 text-[9px] font-bold text-ink-950"
+                      style={c.value ? { background: c.value } : { background: 'conic-gradient(#38bdf8,#a78bfa,#34d399,#fbbf24,#fb7185,#38bdf8)' }}
+                    >
+                      {active ? '✓' : ''}
+                    </span>
+                    {c.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Previsualización en vivo con los cursores reales */}
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <div
+                className="rounded-xl border border-zinc-800 bg-ink-950 p-3 text-center"
+                style={{ cursor: 'var(--af-cur-default)' }}
+              >
+                <p className="text-xs font-medium text-zinc-300">Normal</p>
+                <p className="mt-0.5 font-mono text-[10px] text-zinc-600">pasa por aquí</p>
+              </div>
+              <button
+                type="button"
+                className="rounded-xl border border-zinc-800 bg-ink-950 p-3 text-center transition-colors hover:border-zinc-600"
+                style={{ cursor: 'var(--af-cur-pointer)' }}
+              >
+                <p className="text-xs font-medium text-zinc-300">Interactivo</p>
+                <p className="mt-0.5 font-mono text-[10px] text-zinc-600">clicable</p>
+              </button>
+              <div className="rounded-xl border border-zinc-800 bg-ink-950 p-3 text-center">
+                <p className="mb-1.5 text-xs font-medium text-zinc-300">Texto</p>
+                <input
+                  defaultValue="edítame"
+                  aria-label="Probar cursor de texto"
+                  className="w-full rounded-lg border border-zinc-800 bg-black/40 px-2 py-1 text-center font-mono text-xs text-zinc-200 outline-none focus:border-sky-500/50"
+                  style={{ cursor: 'var(--af-cur-text)' }}
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+          {cursorMode === 'system'
+            ? 'Cursores nativos de tu sistema operativo.'
+            : `Estilo «${CURSOR_STYLES.find((s) => s.id === cursorMode)?.label ?? 'Flecha'}» · tamaño ${cursorSize} · ${cursorColor ? 'color propio' : 'color del acento'}.`}
+        </p>
 
         <h3 id="accent-picker" className="mt-6 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
           🎨 Color de acento
@@ -222,7 +394,7 @@ export default function SettingsPage() {
 
         <p className="mt-3 flex items-start gap-1.5 text-xs leading-relaxed text-zinc-500">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          La preferencia se guarda en este navegador (clave archforge:accent-color) y el cursor adopta el contorno del acento elegido.
+          La preferencia se guarda en este navegador (claves archforge:cursor / archforge:cursor-style) y el cursor adopta el color de acento elegido.
         </p>
       </section>
 

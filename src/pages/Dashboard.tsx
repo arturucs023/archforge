@@ -18,6 +18,8 @@ import {
   Trash2,
 } from 'lucide-react'
 import { REGISTRY, stepUnits, totalUnits, getSection } from '../data/registry'
+import { getIcon } from '../lib/icons'
+import { LEVEL_LABEL } from '../types'
 import { useApp } from '../context/AppContext'
 import { navigate } from '../lib/router'
 import { formatMinutes } from '../lib/utils'
@@ -70,6 +72,22 @@ const MILESTONES: { label: string; sectionId?: string }[] = [
   { label: 'Aplicaciones esenciales', sectionId: 'pacman' },
   { label: 'Optimización y mantenimiento', sectionId: 'optimization' },
   { label: 'Sistema terminado' },
+]
+
+/** Itinerario pedagógico de redes: IP → subnetting → routing → IGP → OSPF → BGP. */
+const NET_ITINERARY = [
+  'net-fundamentos',
+  'net-ipv4',
+  'net-ipv6',
+  'net-switching',
+  'net-stp',
+  'net-routing',
+  'net-igp',
+  'net-ospf',
+  'net-bgp',
+  'net-nat',
+  'net-servicios',
+  'net-seguridad',
 ]
 
 export default function Dashboard() {
@@ -232,6 +250,61 @@ export default function Dashboard() {
                     </button>
                   )}
                 </div>
+              </li>
+            )
+          })}
+        </ol>
+      </section>
+
+      {/* Itinerario de redes */}
+      <section className="mt-6 rounded-2xl border border-sky-500/20 bg-ink-900/70 p-5 sm:p-6">
+        <h2 className="mb-1 flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">
+          <MapPin className="h-4 w-4 text-sky-400" /> Itinerario: redes de computadores
+        </h2>
+        <p className="mb-4 max-w-3xl text-sm leading-relaxed text-zinc-400">
+          De fundamentos a BGP en orden pedagógico: cada unidad desbloquea la siguiente
+          (IP → subnetting → routing → IGP → OSPF → BGP). Incluye visualizaciones interactivas de
+          encapsulación, VLSM, STP, NAT, OSPF y BGP.
+        </p>
+        <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {NET_ITINERARY.map((id, i) => {
+            const s = getSection(id)!
+            const st = stats.sectionState.get(id)
+            const Icon = getIcon(s.icon)
+            const pct = st && st.total ? Math.round((st.done / st.total) * 100) : 0
+            return (
+              <li key={id}>
+                <button
+                  onClick={() => navigate(`/section/${id}`)}
+                  className="group flex h-full w-full flex-col rounded-xl border border-zinc-800 bg-ink-900/60 p-4 text-left transition-colors hover:border-sky-500/40"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/10 font-mono text-[11px] font-bold text-sky-300">
+                        {i + 1}
+                      </span>
+                      <Icon className="h-4 w-4 text-zinc-500 group-hover:text-sky-400" />
+                    </span>
+                    {st?.complete ? (
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-emerald-400">completada</span>
+                    ) : (
+                      <span className="font-mono text-[10px] tabular-nums text-zinc-600">
+                        {st?.done}/{st?.total}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 text-sm font-semibold text-zinc-200">{s.title}</div>
+                  <div className="mt-0.5 line-clamp-2 flex-1 text-xs leading-relaxed text-zinc-500">{s.lead}</div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="h-1 flex-1 overflow-hidden rounded-full bg-zinc-800">
+                      <span
+                        className={cn('block h-full rounded-full', pct === 100 ? 'bg-emerald-500' : 'bg-sky-500')}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </span>
+                    <span className="font-mono text-[10px] text-zinc-600">{LEVEL_LABEL[s.level]} · {formatMinutes(s.minutes)}</span>
+                  </div>
+                </button>
               </li>
             )
           })}

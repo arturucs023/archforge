@@ -70,11 +70,12 @@ export const EXTRA_COMMANDS: CommandEntry[] = [
       { token: 'type cd', meaning: 'indica que cd es un BUILTIN del shell' },
     ],
     intents: ['qué tipo de comando es', 'distinguir builtin binario'],
+    related: ['command', 'hash', 'which'],
   },
   { id: 'hash', name: 'hash', cat: 'bash-shell', distro: ['arch', 'debian'], summary: 'Muestra/limpia la caché de rutas de ejecutables del shell.', examples: [{ lines: ['hash', 'hash -r   # tras instalar un binario nuevo'] }], intents: ['cache rutas comandos', 'comando no encontrado tras instalar'],
-    related: ['command'] },
-  { id: 'pushd', name: 'pushd', cat: 'bash-shell', distro: ['arch', 'debian'], summary: 'Cambia de directorio apilando el anterior (popd vuelve).', examples: [{ lines: ['pushd /var/log', 'popd'] }], intents: ['pila de directorios', 'volver atrás fácil'] },
-  { id: 'popd', name: 'popd', cat: 'bash-shell', distro: ['arch', 'debian'], summary: 'Desapila y vuelve al último directorio guardado por pushd.', examples: [{ lines: ['popd'] }], intents: ['volver al directorio anterior'] },
+    related: ['command', 'type-cmd'] },
+  { id: 'pushd', name: 'pushd', cat: 'bash-shell', distro: ['arch', 'debian'], summary: 'Cambia de directorio apilando el anterior (popd vuelve).', examples: [{ lines: ['pushd /var/log', 'popd'] }], intents: ['pila de directorios', 'volver atrás fácil'], related: ['popd'] },
+  { id: 'popd', name: 'popd', cat: 'bash-shell', distro: ['arch', 'debian'], summary: 'Desapila y vuelve al último directorio guardado por pushd.', examples: [{ lines: ['popd'] }], intents: ['volver al directorio anterior'], related: ['pushd'] },
 
   /* =========================== PIPES Y REDIRECCIONES =========================== */
   {
@@ -277,7 +278,7 @@ export const EXTRA_COMMANDS: CommandEntry[] = [
   {
     id: 'strace', name: 'strace', cat: 'diagnostico', distro: ['arch', 'debian'],
     summary: 'Traza las syscalls de un proceso: ve EXACTAMENTE qué intenta hacer y contra qué ruta.',
-    examples: [{ lines: ['strace -e openat ls /etc', 'strace -c pacman -Sy   # resumen de llamadas'] }],
+    examples: [{ lines: ['strace -e openat ls /etc', 'strace -c pacman -Si bash   # resumen de llamadas'] }],
     whatHappens: 'Se engancha vía ptrace y reporta cada llamada al kernel: perfecto para descubrir «¿por qué no encuentra el config?».',
     intents: ['depurar syscalls', 'por qué falla apertura archivo', 'traza programa'],
   },
@@ -307,7 +308,14 @@ export const EXTRA_COMMANDS: CommandEntry[] = [
   { id: 'make', name: 'make', cat: 'desarrollo', distro: ['arch', 'debian'], summary: 'Ejecuta recetas de un Makefile compilando solo lo cambiado (-j8 en paralelo).', examples: [{ lines: ['make -j$(nproc)'] }], intents: ['compilar proyecto makefile'] },
   { id: 'cmake', name: 'cmake', cat: 'desarrollo', distro: ['arch', 'debian'], summary: 'Generador de build multiplataforma: cmake -B build && cmake --build build.', examples: [{ lines: ['cmake -B build -DCMAKE_BUILD_TYPE=Release', 'cmake --build build -j'] }], intents: ['compilar cmake'] },
   { id: 'python3', name: 'python3', cat: 'desarrollo', distro: ['arch', 'debian'], summary: 'Intérprete Python 3; -m venv crea entornos aislados.', examples: [{ lines: ['python3 -m venv .venv', 'source .venv/bin/activate'] }], intents: ['python terminal', 'entorno virtual python'] },
-  { id: 'pip', name: 'pip', cat: 'desarrollo', distro: ['arch', 'debian'], summary: 'Instalador de paquetes Python (usar SIEMPRE dentro de un venv).', examples: [{ lines: ['pip install requests'] }], intents: ['instalar paquete python'] },
+  { id: 'pip', name: 'pip', cat: 'desarrollo', distro: ['arch', 'debian'], summary: 'Instalador de paquetes Python (usar SIEMPRE dentro de un venv).',
+    examples: [
+      { desc: 'flujo correcto: venv primero', lines: ['python3 -m venv .venv', 'source .venv/bin/activate', 'pip install requests'] },
+      { desc: 'congelar dependencias del proyecto', lines: ['pip freeze > requirements.txt', 'pip install -r requirements.txt'] },
+    ],
+    errors: [{ symptom: 'error: externally-managed-environment (Arch/Debian nuevos).', cause: 'El sistema protege su Python: pip global rompería paquetes del distro.', fix: 'Usa un venv (ver ejemplo) o pipx para apps CLI aisladas.' }],
+    warnNote: 'pip install --break-system-packages fuera de un venv puede romper herramientas del sistema que dependen de Python: no lo uses como atajo.',
+    intents: ['instalar paquete python', 'venv pip', 'requirements python'] },
   { id: 'node', name: 'node', cat: 'desarrollo', distro: ['arch', 'debian'], summary: 'Runtime JavaScript basado en V8; -v verifica versión instalada.', examples: [{ lines: ['node -v', 'node script.js'] }], intents: ['javascript servidor', 'ejecutar js'] },
   { id: 'npm', name: 'npm', cat: 'desarrollo', distro: ['arch', 'debian'], summary: 'Gestor de paquetes de Node.js: init/install/run.', examples: [{ lines: ['npm init -y', 'npm install express', 'npm run dev'] }], intents: ['instalar paquete node', 'npm instalar dependencias'] },
   { id: 'cargo', name: 'cargo', cat: 'desarrollo', distro: ['arch', 'debian'], summary: 'Gestor y constructor oficial de Rust: new/build/run/test.', examples: [{ lines: ['cargo new mi-proyecto', 'cargo run --release'] }], intents: ['rust proyecto', 'compilar rust'] },
@@ -345,7 +353,7 @@ export const EXTRA_COMMANDS: CommandEntry[] = [
     summary: 'Programa comandos periódicos (min hora día mes semana). Requiere cron habilitado.',
     examples: [
       { desc: 'editar las tuyas', lines: ['crontab -e'] },
-      { desc: 'cada día a las 03:30', lines: ['# min hora dia mes dow\n30 3 * * * /usr/local/bin/backup.sh >> ~/backup.log 2>&1'] },
+      { desc: 'cada día a las 03:30', lines: ['# min hora dia mes dow', '30 3 * * * /usr/local/bin/backup.sh >> ~/backup.log 2>&1'] },
     ],
     breakdown: [
       { token: 'min', meaning: '0-59' },

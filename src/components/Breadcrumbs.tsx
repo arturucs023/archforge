@@ -11,7 +11,7 @@ export default function Breadcrumbs({ items }: { items: Crumb[] }) {
   return (
     <nav aria-label="Migas de pan" className="flex flex-wrap items-center gap-1 text-xs text-zinc-500">
       <button onClick={() => navigate('/')} className="flex items-center gap-1 rounded px-1 py-0.5 transition-colors hover:text-sky-300">
-        <Home className="h-3.5 w-3.5" /> Dashboard
+        <Home className="h-3.5 w-3.5" /> Inicio
       </button>
       {items.map((c, i) => (
         <span key={i} className="flex items-center gap-1">

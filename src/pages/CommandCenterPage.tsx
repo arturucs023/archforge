@@ -8,6 +8,7 @@ import DistributionSelector from '../components/DistributionSelector'
 import Breadcrumbs, { PageHeader } from '../components/Breadcrumbs'
 import Quiz from '../components/Quiz'
 import { useApp } from '../context/AppContext'
+import { navigate } from '../lib/router'
 import { cn } from '../lib/utils'
 
 const PKG_CONCEPTS = [
@@ -35,6 +36,9 @@ const INTENT_EXAMPLES = [
   'Quiero ver información de mi GPU',
   'Quiero ver mi dirección IP',
   'Quiero ver los servicios activos',
+  'Quiero saber si tengo conexión a internet',
+  'Quiero ver los puertos abiertos de mi equipo',
+  'Quiero capturar el tráfico de red',
   'Quiero comprimir una carpeta',
   'Quiero descargar un archivo',
 ]
@@ -115,7 +119,7 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
       />
 
       {/* Tabs */}
-      <div className="mb-5 flex flex-wrap gap-2">
+      <div className="mb-5 flex flex-wrap gap-2" role="tablist" aria-label="Vistas del Command Center">
         {(
           [
             ['explorar', 'Explorar comandos'],
@@ -126,6 +130,8 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
         ).map(([t, label]) => (
           <button
             key={t}
+            role="tab"
+            aria-selected={tab === t}
             onClick={() => setTab(t)}
             className={cn(
               'rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors',
@@ -145,9 +151,10 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
       {/* EXPLORAR */}
       {tab === 'explorar' && (
         <>
-          <div className="mb-4 flex flex-wrap gap-1.5">
+          <div className="mb-4 flex flex-wrap gap-1.5" role="group" aria-label="Filtrar por categoría">
             <button
               onClick={() => { setCat(null); }}
+              aria-pressed={!cat}
               className={cn('rounded-lg border px-3 py-1 text-xs transition-colors', !cat ? 'border-sky-500/50 bg-sky-500/10 text-sky-300' : 'border-zinc-800 text-zinc-400 hover:border-zinc-600')}
             >
               Todas
@@ -156,6 +163,7 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
               <button
                 key={c.id}
                 onClick={() => setCat(c.id === cat ? null : c.id)}
+                aria-pressed={cat === c.id}
                 className={cn('rounded-lg border px-3 py-1 text-xs transition-colors', cat === c.id ? 'border-sky-500/50 bg-sky-500/10 text-sky-300' : 'border-zinc-800 text-zinc-400 hover:border-zinc-600')}
               >
                 {c.label}
@@ -211,16 +219,12 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
                     <div key={c.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-zinc-800 bg-ink-900/60 p-4">
                       <code className="font-mono text-sm font-bold text-emerald-300">{c.name}</code>
                       <span className="min-w-0 flex-1 truncate text-xs text-zinc-400">{c.summary}</span>
-                      <button onClick={() => setTab('explorar')} className="shrink-0 rounded-md border border-zinc-700 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-zinc-400 hover:text-sky-300">
+                      <button onClick={() => { setTab('explorar'); navigate(`/commands?focus=${encodeURIComponent(c.id)}`) }} className="shrink-0 rounded-md border border-zinc-700 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-zinc-400 hover:text-sky-300">
                         detalles <ArrowRight className="inline h-2.5 w-2.5" />
                       </button>
                     </div>
                   ))}
                 </>
-              )}
-
-              {(results[0].distro.includes('arch') || results[0].distro.includes('debian')) && results[0].distro.length > 0 && (
-                <DistroNote cat={results[0].cat} />
               )}
             </div>
           )}
@@ -355,9 +359,4 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
       )}
     </div>
   )
-}
-
-function DistroNote({ cat }: { cat: CatId }) {
-  void cat
-  return null
 }

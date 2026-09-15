@@ -1,6 +1,7 @@
 import type { CommandEntry } from './meta'
 import { EXTRA_COMMANDS } from './entries-extra'
 import { MORE_COMMANDS } from './entries-more'
+import { ADMIN_COMMANDS } from './entries-admin'
 
 /**
  * Catálogo de comandos del Command Center.
@@ -137,9 +138,10 @@ const CORE_COMMANDS: CommandEntry[] = [
     intents: ['buscar archivo', 'encontrar fichero', 'buscar por nombre', 'archivos grandes', 'buscar archivos recientes', 'localizar un archivo'],
   },
   {
-    id: 'locate', name: 'locate', cat: 'busqueda', distro: ['debian'], 
-    summary: 'Busca por nombre en una base de datos preindexada (updatedb): instantáneo pero puede estar desfasado. En Arch: paquete plocate.',
+    id: 'locate', name: 'locate', cat: 'busqueda', distro: ['arch', 'debian'],
+    summary: 'Busca por nombre en una base de datos preindexada (updatedb): instantáneo pero puede estar desfasado. En Arch instala plocate.',
     examples: [{ lines: ['sudo updatedb', 'locate nginx.conf'] }],
+    errors: [{ symptom: 'No encuentra un archivo que SÍ existe.', cause: 'La base se genera periódicamente (timer updatedb).', fix: 'sudo updatedb y reintenta; para frescura total usa find/fd.' }],
     alternatives: [{ name: 'find', note: 'siempre fresco, más lento' }, { name: 'plocate', note: 'implementación moderna rápida (extra)' }],
     intents: ['buscar rápido por nombre', 'locate base de datos'],
   },
@@ -179,11 +181,12 @@ const CORE_COMMANDS: CommandEntry[] = [
     summary: 'Paginador interactivo: navega archivos largos sin cargarlos enteros en memoria.',
     examples: [
       { lines: ['less /var/log/pacman.log'] },
-      { desc: 'dentro de less: /buscar · n siguiente · q salir', lines: ['# atajos: /texto buscar, Espacio avanzar, q salir'] },
+      { desc: 'abrir buscando un patrón (dentro: /buscar · n siguiente · Espacio avanzar · q salir)', lines: ['less +/failed /var/log/pacman.log'] },
     ],
+    errors: [{ symptom: 'Ves «(END)» y no responde a flechas.', fix: 'Pulsa q para salir; less captura el teclado mientras está abierto.' }],
     intents: ['leer archivo largo', 'paginar salida', 'scroll en terminal'],
   },
-  { id: 'more', name: 'more', cat: 'texto', distro: ['arch', 'debian'], summary: 'Paginador histórico, menos capaz que less (solo avanza).', examples: [{ lines: ['more archivo.txt'] }], intents: ['paginar básico'] },
+  { id: 'more', name: 'more', cat: 'texto', distro: ['arch', 'debian'], summary: 'Paginador histórico, menos capaz que less (solo avanza).', examples: [{ lines: ['more archivo.txt'] }], related: ['less'], intents: ['paginar básico'] },
   {
     id: 'head', name: 'head', cat: 'texto', distro: ['arch', 'debian'],
     summary: 'Primeras líneas de un archivo o entrada (10 por defecto).',
@@ -195,9 +198,10 @@ const CORE_COMMANDS: CommandEntry[] = [
     summary: 'Últimas líneas; -f sigue el archivo EN VIVO (logs).',
     examples: [
       { lines: ['tail -n 50 /var/log/pacman.log'] },
-      { desc: 'seguimiento en vivo hasta Ctrl+C', lines: ['tail -f /var/log/syslog'] },
+      { desc: 'seguimiento en vivo hasta Ctrl+C', lines: ['tail -f /var/log/pacman.log'] },
     ],
     whatHappens: '-f mantiene el descriptor abierto y imprime cada línea nueva al instante: monitorización clásica de logs.',
+    errors: [{ symptom: 'tail: cannot open /var/log/syslog.', cause: 'En Arch no existe syslog por defecto (los logs viven en el journal).', fix: 'Usa journalctl -f; en Debian/Ubuntu sí existe /var/log/syslog.' }],
     alternatives: [{ name: 'journalctl -f', note: 'equivalente moderno para logs de systemd' }, { name: 'multitail', note: 'varios logs simultáneos' }],
     intents: ['final de archivo', 'últimas líneas', 'seguir log en vivo', 'monitorizar log'],
   },
@@ -273,6 +277,7 @@ const CORE_COMMANDS: CommandEntry[] = [
       { token: '600', meaning: 'solo el dueño lee/escribe: claves privadas' },
       { token: '+x', meaning: 'añade ejecución (simbólico)' },
       { token: '-R', meaning: 'recursivo sobre el árbol' },
+      { token: '4755 / 2755 / 1777', meaning: 'bits especiales: setuid (4: ejecuta COMO el dueño), setgid (2: hereda grupo en dirs), sticky (1: solo el dueño borra, como /tmp)' },
     ],
     examples: [
       { desc: 'hacer ejecutable un script', lines: ['chmod +x script.sh'] },
@@ -286,7 +291,18 @@ const CORE_COMMANDS: CommandEntry[] = [
   {
     id: 'chown', name: 'chown', cat: 'permisos', distro: ['arch', 'debian'], important: true,
     summary: 'Cambia propietario y/o grupo de archivos (requiere root salvo cambios propios).',
-    examples: [{ lines: ['sudo chown tu-usuario:tu-usuario /srv/datos', 'sudo chown -R www-data:www-data /var/www'] }],
+    breakdown: [
+      { token: 'usuario:grupo', meaning: 'dueño y grupo de una vez (chown ana:devs web/)' },
+      { token: 'usuario:', meaning: 'cambia dueño y pone SU grupo principal' },
+      { token: ':grupo', meaning: 'cambia solo el grupo (equivale a chgrp)' },
+      { token: '-R', meaning: 'recursivo: ¡peligroso en rutas del sistema!' },
+    ],
+    examples: [
+      { lines: ['sudo chown tu-usuario:tu-usuario /srv/datos', 'sudo chown -R www-data:www-data /var/www'] },
+      { desc: 'solo el grupo, sin tocar el dueño', lines: ['sudo chown :developers /srv/repo'] },
+    ],
+    errors: [{ symptom: 'El servicio deja de arrancar tras un chown.', cause: 'Archivos con dueño/grupo equivocados (típico en /var/www o ~/.ssh).', fix: 'Reasigna el usuario que el servicio espera y revisa con namei -l la ruta.' }],
+    warnNote: 'chown -R en la ruta equivocada (/, /usr, /etc) deja el sistema inservible y NO hay deshacer: verifica la ruta con pwd y ls antes.',
     intents: ['cambiar dueño', 'propiedad archivo', 'chown recursivo'],
   },
   { id: 'chgrp', name: 'chgrp', cat: 'permisos', distro: ['arch', 'debian'], summary: 'Cambia solo el grupo propietario.', examples: [{ lines: ['sudo chgrp developers /srv/repo'] }], intents: ['cambiar grupo'] },
@@ -313,13 +329,27 @@ const CORE_COMMANDS: CommandEntry[] = [
 
   /* =================================== USUARIOS =================================== */
   { id: 'useradd', name: 'useradd', cat: 'usuarios', distro: ['arch', 'debian'], summary: 'Crea cuentas de usuario; -m crea home, -G grupos suplementarios, -s shell.', important: true,
-    examples: [{ lines: ['sudo useradd -m -G wheel -s /bin/bash ana', 'sudo passwd ana'] }],
+    breakdown: [
+      { token: '-m', meaning: 'crea el home copiando /etc/skel' },
+      { token: '-G wheel', meaning: 'grupos extra (wheel = sudoers en Arch; en Debian/Ubuntu usa sudo)' },
+      { token: '-s /bin/bash', meaning: 'shell de login (si no, puede quedar /bin/sh o nologin)' },
+    ],
+    examples: [
+      { desc: 'Arch: con sudo vía wheel', lines: ['sudo useradd -m -G wheel -s /bin/bash ana', 'sudo passwd ana'] },
+      { desc: 'Debian/Ubuntu: grupo sudo', lines: ['sudo useradd -m -G sudo -s /bin/bash ana', 'sudo passwd ana'] },
+    ],
     whatHappens: 'Escribe en /etc/passwd,/etc/shadow,/etc/group y crea home desde /etc/skel.',
+    errors: [{ symptom: 'El usuario nuevo «no tiene sudo».', cause: 'No está en el grupo con sudo (wheel en Arch, sudo en Debian) o falta %wheel en /etc/sudoers.', fix: 'usermod -aG <grupo> usuario y revisa sudo visudo.' }],
     verify: ['id ana'],
     intents: ['crear usuario', 'añadir cuenta', 'nuevo usuario'],
   },
   { id: 'usermod', name: 'usermod', cat: 'usuarios', distro: ['arch', 'debian'], summary: 'Modifica cuentas: -aG añade a grupos SIN perder los actuales, -L bloquea, -s cambia shell.', examples: [{ lines: ['sudo usermod -aG docker,video ana'] }], errors: [{ symptom: 'Tras usermod -G el usuario perdió grupos.', fix: 'Siempre -aG (append), nunca -G a secas.' }], intents: ['añadir usuario a grupo', 'modificar usuario', 'bloquear cuenta'] },
-  { id: 'userdel', name: 'userdel', cat: 'usuarios', distro: ['arch', 'debian'], summary: 'Elimina cuenta; -r borra también su home y correo.', examples: [{ lines: ['sudo userdel -r ana'] }], intents: ['eliminar usuario', 'borrar cuenta'] },
+  { id: 'userdel', name: 'userdel', cat: 'usuarios', distro: ['arch', 'debian'], summary: 'Elimina cuenta; -r borra también su home y correo.',
+    breakdown: [{ token: '-r', meaning: 'remove: borra home + spool de correo (sin -r la cuenta desaparece pero los archivos quedan huérfanos)' }],
+    examples: [{ lines: ['sudo userdel -r ana'] }],
+    verify: ['id ana   # debe decir «no such user»'],
+    warnNote: '-r destruye el home sin papelera: archiva antes lo que importe (tar) y confirma el nombre con id.',
+    intents: ['eliminar usuario', 'borrar cuenta'] },
   { id: 'passwd', name: 'passwd', cat: 'usuarios', distro: ['arch', 'debian'], summary: 'Cambia contraseñas (la tuya sin argumentos; otras como root).', examples: [{ lines: ['passwd', 'sudo passwd ana'] }], intents: ['cambiar contraseña', 'resetear password'] },
   { id: 'groups', name: 'groups', cat: 'usuarios', distro: ['arch', 'debian'], summary: 'Lista los grupos de un usuario.', examples: [{ lines: ['groups', 'groups ana'] }], intents: ['grupos de usuario'] },
   { id: 'id', name: 'id', cat: 'usuarios', distro: ['arch', 'debian'], summary: 'UID, GID principal y todos los grupos suplementarios.', examples: [{ lines: ['id'] }], intents: ['mi uid', 'identidad usuario'] },
@@ -350,8 +380,33 @@ const CORE_COMMANDS: CommandEntry[] = [
     alternatives: [{ name: 'paru/yay', note: 'extiende pacman al AUR' }],
     intents: ['actualizar sistema arch', 'instalar programa arch', 'gestor de paquetes arch', 'actualizar arch linux', 'pacman actualizar'],
   },
-  { id: 'yay', name: 'yay', cat: 'paquetes', distro: ['arch'], summary: 'Helper del AUR: busca/construye/instala PKGBUILDs manteniendo pacman como motor. NUNCA con sudo.', examples: [{ lines: ['yay', 'yay -S google-chrome'] }], intents: ['instalar de AUR', 'aur helper', 'programas no oficiales arch'] },
-  { id: 'paru', name: 'paru', cat: 'paquetes', distro: ['arch'], summary: 'Helper AUR moderno en Rust con revisión de diffs integrada. Uso igual que yay.', examples: [{ lines: ['paru', 'paru -Sua'] }], intents: ['paru aur', 'actualizar aur'] },
+  { id: 'yay', name: 'yay', cat: 'paquetes', distro: ['arch'], summary: 'Helper del AUR: busca/construye/instala PKGBUILDs manteniendo pacman como motor. NUNCA con sudo.',
+    breakdown: [
+      { token: 'yay <paquete>', meaning: 'busca en repos + AUR e instala (equivale a -S)' },
+      { token: 'yay (solo)', meaning: 'actualiza TODO: repos vía pacman + paquetes AUR' },
+      { token: 'yay -Sua', meaning: 'actualiza SOLO lo del AUR' },
+      { token: 'yay -Syu --devel', meaning: 'incluye paquetes -git/svn del AUR' },
+    ],
+    examples: [
+      { lines: ['yay google-chrome', 'yay -S visual-studio-code-bin'] },
+      { desc: 'actualizar todo incluyendo AUR', lines: ['yay'] },
+    ],
+    whatHappens: 'Descarga el PKGBUILD a ~/.cache/yay, te muestra el diff para revisar, compila con makepkg e instala el .pkg resultante con pacman -U.',
+    errors: [
+      { symptom: 'FAILED (unknown public key).', fix: 'Importa la clave del mantenedor: gpg --recv-keys ID (ver comentarios del AUR).' },
+      { symptom: 'yay pide contraseña de sudo en bucle o falla al compilar.', fix: 'Nunca ejecutes yay con sudo: compila como tu usuario y solo eleva para instalar.' },
+    ],
+    warnNote: 'El AUR es código de terceros: revisa SIEMPRE el PKGBUILD/diff antes de compilar, sobre todo en paquetes poco populares.',
+    intents: ['instalar de AUR', 'aur helper', 'programas no oficiales arch'] },
+  { id: 'paru', name: 'paru', cat: 'paquetes', distro: ['arch'], summary: 'Helper AUR moderno en Rust con revisión de diffs integrada. Uso igual que yay.',
+    breakdown: [
+      { token: 'paru <paquete>', meaning: 'busca e instala (repos + AUR)' },
+      { token: 'paru -Sua', meaning: 'actualiza solo AUR' },
+      { token: '--review', meaning: 'fuerza revisar PKGBUILD antes de compilar' },
+    ],
+    examples: [{ lines: ['paru', 'paru -Sua'] }],
+    warnNote: 'Misma regla que yay: sin sudo y revisando el PKGBUILD.',
+    intents: ['paru aur', 'actualizar aur'] },
   {
     id: 'apt', name: 'apt', cat: 'paquetes', distro: ['debian'], important: true,
     summary: 'Gestor de paquetes de Debian/Ubuntu: update (índices) + upgrade (aplicar) + install/remove/search.',
@@ -433,13 +488,23 @@ const CORE_COMMANDS: CommandEntry[] = [
   {
     id: 'journalctl', name: 'journalctl', cat: 'logs', distro: ['arch', 'debian'], important: true,
     summary: 'Consulta el journal binario de systemd: por boot, unidad, prioridad y en vivo.',
+    breakdown: [
+      { token: '-b / -b -1', meaning: 'boot actual / boot anterior (post-mortem)' },
+      { token: '-u unidad', meaning: 'filtra por servicio (puede repetirse)' },
+      { token: '-p 3 / -p err..alert', meaning: 'prioridad máxima (3=err) o rango' },
+      { token: '-f', meaning: 'follow: en vivo como tail -f' },
+      { token: '--since "1 hour ago" / -S', meaning: 'ventana temporal (also --until/-U)' },
+      { token: '-k', meaning: 'solo mensajes del kernel (dmesg moderno)' },
+    ],
     examples: [
       { desc: 'errores del arranque actual', lines: ['journalctl -p 3 -xb'] },
       { desc: 'logs de un servicio en vivo', lines: ['journalctl -u NetworkManager -f'] },
       { desc: 'boot anterior (post-mortem)', lines: ['journalctl -b -1 -e'] },
+      { desc: 'cuánto ocupa y poda segura', lines: ['journalctl --disk-usage', 'sudo journalctl --vacuum-size=200M'] },
     ],
     whatHappens: 'Lee /run(log)/journal (binario indexado). -p 3 filtra prioridad ≤ err; --disk-usage y vacuum controlan tamaño.',
-    intents: ['ver logs', 'errores del sistema', 'logs de un servicio', 'diagnosticar fallo servicio'],
+    errors: [{ symptom: '-- No entries -- (vacío).', cause: 'Storage=volatile (solo RAM) o reloj mal tras corte de luz.', fix: 'Storage=persistent en journald.conf para post-mortem reales.' }],
+    intents: ['ver logs', 'errores del sistema', 'logs de un servicio', 'diagnosticar fallo servicio', 'limpiar logs journal'],
   },
 
   /* ===================================== DISCOS ===================================== */
@@ -464,23 +529,91 @@ const CORE_COMMANDS: CommandEntry[] = [
     intents: ['montar disco', 'montar usb', 'montar particion'],
   },
   { id: 'umount', name: 'umount', cat: 'discos', distro: ['arch', 'debian'], summary: 'Desmonta con seguridad (sincroniza y libera). Falla si algo usa el punto.', examples: [{ lines: ['sudo umount /mnt/datos'] }], errors: [{ symptom: 'target is busy.', fix: 'Cierra shells/apps dentro; lsof +f -- /mnt/datos encuentra al culpable.' }], intents: ['expulsar disco', 'desmontar usb'] },
-  { id: 'fdisk', name: 'fdisk', cat: 'discos', distro: ['arch', 'debian'], summary: 'Editor interactivo de particiones MBR/GPT (g/n/t/w/q). No escribe hasta w.', examples: [{ lines: ['sudo fdisk -l /dev/nvme0n1', 'sudo fdisk /dev/sda'] }], intents: ['particionar disco', 'crear particiones'] },
+  { id: 'fdisk', name: 'fdisk', cat: 'discos', distro: ['arch', 'debian'], summary: 'Editor interactivo de particiones MBR/GPT (g/n/t/w/q). No escribe hasta w.',
+    breakdown: [
+      { token: 'fdisk -l', meaning: 'lista discos y particiones (solo lectura, seguro)' },
+      { token: 'g', meaning: 'nueva tabla GPT (borra el esquema actual en memoria)' },
+      { token: 'n', meaning: 'nueva partición (número, inicio, tamaño como +512M)' },
+      { token: 't', meaning: 'cambia el TIPO (1 EFI, 19 swap, 20 Linux FS…)' },
+      { token: 'w / q', meaning: 'w ESCRIBE y sale · q sale SIN guardar' },
+    ],
+    examples: [
+      { desc: 'inspeccionar (seguro)', lines: ['sudo fdisk -l /dev/nvme0n1'] },
+      { desc: 'editar (interactivo)', lines: ['sudo fdisk /dev/sda'] },
+    ],
+    errors: [{ symptom: 'El kernel sigue viendo la tabla vieja tras w.', fix: 'partprobe /dev/sda o reinicia; si una partición está montada no se puede reescribir.' }],
+    warnNote: 'w sobre el disco equivocado destruye el particionado: confirma con fdisk -l y lsblk ANTES de editar. Haz backup de datos importantes.',
+    intents: ['particionar disco', 'crear particiones'] },
   { id: 'cfdisk', name: 'cfdisk', cat: 'discos', distro: ['arch', 'debian'], summary: 'fdisk con interfaz de flechas: mismo motor, más amable.', examples: [{ lines: ['sudo cfdisk /dev/sda'] }], intents: ['particionar fácil'] },
-  { id: 'parted', name: 'parted', cat: 'discos', distro: ['arch', 'debian'], summary: 'Particionado por comandos/scriptable (print, mklabel gpt, mkpart, resizepart).', examples: [{ lines: ['sudo parted /dev/sda print'] }], intents: ['particionar script', 'redimensionar particion'] },
-  { id: 'mkfs', name: 'mkfs', cat: 'discos', distro: ['arch', 'debian'], summary: 'Familia de formateo: mkfs.ext4/.btrfs/.fat/.xfs — DESTRUYE los datos del destino.', examples: [{ lines: ['sudo mkfs.ext4 -L datos /dev/sdb1'] }], intents: ['formatear disco', 'formatear usb'] },
+  { id: 'parted', name: 'parted', cat: 'discos', distro: ['arch', 'debian'], summary: 'Particionado por comandos/scriptable (print, mklabel gpt, mkpart, resizepart). ¡Escribe AL INSTANTE!',
+    breakdown: [
+      { token: 'print', meaning: 'muestra tabla y tamaños (seguro)' },
+      { token: 'mklabel gpt', meaning: 'nueva tabla GPT (borra el esquema)' },
+      { token: 'mkpart primary ext4 1MiB 513MiB', meaning: 'crea partición con inicio/fin explícitos' },
+      { token: 'resizepart N 100%', meaning: 'estira la partición N (luego agranda el FS con resize2fs/btrfs)' },
+    ],
+    examples: [
+      { desc: 'inspeccionar', lines: ['sudo parted /dev/sda print'] },
+      { desc: 'script no interactivo', lines: ['sudo parted -s /dev/sdb mklabel gpt mkpart primary ext4 1MiB 100%'] },
+    ],
+    warnNote: 'A diferencia de fdisk, parted APLICA cada cambio al momento: no hay «q para salir sin guardar». Doble verificación del dispositivo.',
+    intents: ['particionar script', 'redimensionar particion'] },
+  { id: 'mkfs', name: 'mkfs', cat: 'discos', distro: ['arch', 'debian'], summary: 'Familia de formateo: mkfs.ext4/.btrfs/.fat/.xfs — DESTRUYE los datos del destino.',
+    breakdown: [
+      { token: '-L etiqueta', meaning: 'LABEL legible (luego montas por LABEL= en vez de UUID)' },
+      { token: '-t tipo', meaning: 'elige FS con el mkfs genérico (mkfs -t ext4 …)' },
+      { token: '/dev/sdb1', meaning: 'LA PARTICIÓN (nunca el disco entero salvo que quieras eso)' },
+    ],
+    examples: [
+      { lines: ['sudo mkfs.ext4 -L datos /dev/sdb1'] },
+      { desc: 'USB compatible con Windows', lines: ['sudo mkfs.fat -F32 -n USB /dev/sdc1'] },
+    ],
+    verify: ['lsblk -f /dev/sdb1'],
+    errors: [{ symptom: 'Formateé la partición equivocada.', fix: 'No hay deshacer: recupera lo posible con photorec/testdisk y reinstala. Prevención: lsblk -f antes.' }],
+    warnNote: 'Comprueba TRES veces el destino (lsblk -f): un dígito distinto (sda1 vs sdb1) borra otro sistema.',
+    intents: ['formatear disco', 'formatear usb'] },
 
   /* ======================================= RED ======================================= */
   {
     id: 'ip', name: 'ip', cat: 'red', distro: ['arch', 'debian'], important: true,
-    summary: 'Suite iproute2 moderna: addr (IPs), link (interfaces), route (rutas), neigh (ARP).',
+    summary: 'Suite iproute2 moderna: addr (IPs), link (interfaces), route (rutas), neigh (ARP). Sustituye a ifconfig/route/arp.',
+    breakdown: [
+      { token: 'addr | link | route | neigh', meaning: 'OBJETO sobre el que operas (direcciones, enlaces, rutas, vecinos ARP/NDP)' },
+      { token: 'show (defecto)', meaning: 'mostrar (puede omitirse: ip addr ≡ ip addr show)' },
+      { token: 'dev eth0', meaning: 'limita a una interfaz' },
+      { token: '-brief / -br', meaning: 'una línea por interfaz (ideal para vistazos y scripts)' },
+      { token: '-4 / -6', meaning: 'solo IPv4 / solo IPv6' },
+      { token: '-s', meaning: 'estadísticas (errores, drops: oro para diagnóstico)' },
+      { token: 'add/del/set', meaning: 'cambios TEMPORALES hasta reiniciar (lo persistente va en NetworkManager/systemd-networkd)' },
+    ],
     examples: [
       { desc: 'mi IP y estado de interfaces', lines: ['ip addr', 'ip -brief address'] },
-      { desc: 'gateway por donde sales', lines: ['ip route'] },
+      { desc: 'gateway por donde sales', lines: ['ip route', 'ip route show default'] },
+      { desc: 'vecinos ARP/NDP y errores de interfaz', lines: ['ip neigh show', 'ip -s link show dev wlan0'] },
+      { desc: 'cambios temporales (¡se pierden al reiniciar!)', lines: ['sudo ip link set dev eth0 up', 'sudo ip addr add 192.168.1.50/24 dev eth0', 'sudo ip addr del 192.168.1.50/24 dev eth0'] },
     ],
     whatHappens: 'Consulta netlink del kernel: estado REAL de interfaces/rutas, sin capas intermedias.',
-    intents: ['mi dirección ip', 'ver interfaces de red', 'ip local', 'gateway puerta enlace'],
+    errors: [{ symptom: 'RTNETLINK answers: File exists.', cause: 'Esa IP/ruta ya está configurada.', fix: 'Muestra primero (ip addr/route) y usa del antes de add, o corrige el solape.' }],
+    related: ['ss', 'ping'],
+    intents: ['mi dirección ip', 'ver interfaces de red', 'ip local', 'gateway puerta enlace', 'ver tabla arp', 'activar interfaz red'],
   },
-  { id: 'ping', name: 'ping', cat: 'red', distro: ['arch', 'debian'], summary: 'ICMP echo para probar conectividad y latencia; diagnosticar en cascada IP→router→Internet→DNS.', examples: [{ lines: ['ping -c 3 192.168.1.1', 'ping -c 3 archlinux.org'] }], intents: ['probar conexion', 'hay internet', 'latencia', 'ping test'] },
+  { id: 'ping', name: 'ping', cat: 'red', distro: ['arch', 'debian'], summary: 'ICMP echo para probar conectividad y latencia; diagnosticar en cascada IP→router→Internet→DNS.',
+    breakdown: [
+      { token: '-c 3', meaning: 'solo 3 paquetes (sin -c no para hasta Ctrl+C)' },
+      { token: '-i 0.2', meaning: 'intervalo entre paquetes (solo root por debajo de 0.2 s)' },
+      { token: '-s 1400', meaning: 'tamaño de carga (útil para cazar problemas de MTU)' },
+      { token: '-4 / -6', meaning: 'fuerza familia de direcciones' },
+    ],
+    examples: [
+      { desc: 'cascada de diagnóstico: gateway → IP pública → nombre', lines: ['ping -c 3 192.168.1.1', 'ping -c 3 1.1.1.1', 'ping -c 3 archlinux.org'] },
+    ],
+    whatHappens: 'Envía echo-request y mide echo-reply: si falla el paso 1 es tu LAN; si falla el 2, tu ISP/ruta; si falla el 3, tu DNS.',
+    errors: [
+      { symptom: '100% packet loss al gateway.', fix: 'Cable/WiFi, IP en la red correcta (ip addr) y ARP (ip neigh): no es Internet, es tu LAN.' },
+      { symptom: 'ping: archlinux.org: Name or service not known.', cause: 'DNS roto, aunque haya conectividad.', fix: 'Prueba la IP directa; revisa resolvectl y /etc/resolv.conf.' },
+    ],
+    related: ['ip', 'traceroute'],
+    intents: ['probar conexion', 'hay internet', 'latencia', 'ping test', 'no tengo internet'] },
   { id: 'dhclient', name: 'dhclient', cat: 'red', distro: ['arch', 'debian'], summary: 'Cliente DHCP manual: -v narra el ciclo DORA; -r libera el lease actual.', examples: [{ lines: ['sudo dhclient -v eth0', 'sudo dhclient -r eth0'] }], intents: ['renovar ip dhcp', 'pedir direccion automatica', 'liberar lease'] },
   {
     id: 'ss', name: 'ss', cat: 'red', distro: ['arch', 'debian'], important: true,
@@ -491,21 +624,82 @@ const CORE_COMMANDS: CommandEntry[] = [
       { token: '-p', meaning: 'proceso dueño (necesita verlo con permisos)' },
       { token: '-n', meaning: 'no resolver nombres (rápido)' },
     ],
-    examples: [{ desc: '¿qué está expuesto y por quién?', lines: ['ss -tulpn'] }],
+    examples: [
+      { desc: '¿qué está expuesto y por quién?', lines: ['ss -tulpn'] },
+      { desc: 'conexiones TCP vivas (¿a dónde habla este equipo?)', lines: ['ss -tn state established'] },
+    ],
+    errors: [{ symptom: 'Sin columna de proceso (guiones en vez de PID).', cause: '-p necesita ver el proceso: otro usuario o contenedor.', fix: 'Repite con sudo; en contenedores mira desde el host.' }],
     whatHappens: 'Lee tablas de sockets del kernel directamente: sustituto oficial de netstat.',
     intents: ['puerto ocupado', 'quien usa un puerto', 'puertos abiertos', 'qué escucha', 'proceso usando puerto'],
   },
   { id: 'curl', name: 'curl', cat: 'red', distro: ['arch', 'debian'], summary: 'Cliente HTTP(S) universal para probar APIs y descargar; -I cabeceras, -o destino, -X métodos.', important: true,
-    examples: [{ lines: ['curl -I https://archlinux.org', 'curl -o file.zip https://example.com/file.zip'] }],
-    intents: ['probar api', 'petición http', 'cabeceras web'],
+    breakdown: [
+      { token: '-I / --head', meaning: 'solo cabeceras de respuesta (¿vive? ¿redirige? ¿qué servidor?)' },
+      { token: '-sS -L', meaning: 'silencioso pero mostrando errores + seguir redirecciones (imprescindible en scripts)' },
+      { token: '-f / --fail', meaning: 'falla (exit ≠ 0) ante HTTP 4xx/5xx en vez de guardar la página de error' },
+      { token: '-o archivo / -O', meaning: 'guarda con el nombre que elijas / con el nombre remoto' },
+      { token: '-X POST -H "Ct: application/json" -d \'{…}\'', meaning: 'peticiones API con método, cabecera y cuerpo' },
+      { token: '-v', meaning: 'narra TLS+HTTP para depurar (cert, redirects, headers)' },
+    ],
+    examples: [
+      { lines: ['curl -I https://archlinux.org', 'curl -o file.zip https://example.com/file.zip'] },
+      { desc: 'API + descarga robusta para scripts', lines: ['curl -sS -X GET https://api.github.com/repos/archlinux/archinstall | head -c 300', 'curl -fSL -o app.tar.gz https://example.com/app.tar.gz'] },
+    ],
+    errors: [
+      { symptom: 'SSL certificate problem.', cause: 'Reloj del sistema mal (TLS valida fechas) o CA ausente.', fix: 'timedatectl status primero; actualiza ca-certificates.' },
+      { symptom: 'El script «descarga bien» pero guarda un 404.', fix: 'Añade -f para que curl falle en vez de guardar HTML de error.' },
+    ],
+    related: ['wget'],
+    intents: ['probar api', 'petición http', 'cabeceras web', 'descargar con curl'],
   },
-  { id: 'wget', name: 'wget', cat: 'red', distro: ['arch', 'debian'], summary: 'Descargador robusto: reanuda (-c), espejos (--mirror), funciona en scripts.', examples: [{ lines: ['wget -c https://geo.mirror.pkgbuild.com/iso/latest/archlinux-x86_64.iso'] }], intents: ['descargar archivo', 'reanudar descarga'], alternatives: [{ name: 'curl -O -C -', note: 'descarga+reanudar equivalente' }] },
-  { id: 'traceroute', name: 'traceroute', cat: 'red', distro: ['arch', 'debian'], summary: 'Salto a salto hasta un destino: dónde muere la conexión.', examples: [{ lines: ['traceroute archlinux.org'] }], alternatives: [{ name: 'tracepath', note: 'sin root, MTU incluido' }], intents: ['dónde falla la conexión', 'ruta de red'] },
-  { id: 'tracepath', name: 'tracepath', cat: 'red', distro: ['arch', 'debian'], summary: 'traceroute sin privilegios, detectando MTU del camino.', examples: [{ lines: ['tracepath 1.1.1.1'] }], intents: ['ruta sin root', 'mtu'] },
-  { id: 'dig', name: 'dig', cat: 'red', distro: ['arch', 'debian'], summary: 'Consultas DNS precisas (@servidor, tipos A/AAAA/MX/TXT); +short para salida mínima.', examples: [{ lines: ['dig archlinux.org +short', 'dig @1.1.1.1 example.com MX'] }], alternatives: [{ name: 'resolvectl query', note: 'integrado con systemd-resolved' }], intents: ['consultar dns', 'resolver dominio', 'registros mx txt'] },
-  { id: 'nslookup', name: 'nslookup', cat: 'red', distro: ['arch', 'debian'], summary: 'DNS interactivo clásico (legado, sigue útil en Windows para comparar).', examples: [{ lines: ['nslookup github.com'] }], intents: ['dns sencillo'] },
-  { id: 'hostname', name: 'hostname', cat: 'red', distro: ['arch', 'debian'], summary: 'Muestra o fija (temporal) el nombre del equipo.', examples: [{ lines: ['hostname'] }], intents: ['nombre del equipo'] },
-  { id: 'hostnamectl', name: 'hostnamectl', cat: 'red', distro: ['arch', 'debian'], summary: 'systemd: hostname persistente + info OS/kernel/arch.', examples: [{ lines: ['hostnamectl', 'sudo hostnamectl set-hostname mi-arch'] }], intents: ['cambiar hostname permanente', 'info sistema operativo'] },
+  { id: 'wget', name: 'wget', cat: 'red', distro: ['arch', 'debian'], summary: 'Descargador robusto: reanuda (-c), espejos (--mirror), funciona en scripts.',
+    breakdown: [
+      { token: '-c', meaning: 'continúa una descarga interrumpida (imprescindible en ISOs grandes)' },
+      { token: '-O nombre', meaning: 'guarda con ese nombre (por defecto usa el remoto)' },
+      { token: '-q --show-progress', meaning: 'silencioso pero con barra de progreso (ideal en scripts)' },
+      { token: '--mirror -p', meaning: 'espejo recursivo de un sitio con sus recursos' },
+    ],
+    examples: [
+      { lines: ['wget -c https://geo.mirror.pkgbuild.com/iso/latest/archlinux-x86_64.iso'] },
+      { desc: 'descarga limpia para scripts', lines: ['wget -q --show-progress -O arch.iso URL'] },
+    ],
+    intents: ['descargar archivo', 'reanudar descarga'], related: ['curl'], alternatives: [{ name: 'curl -O -C -', note: 'descarga+reanudar equivalente' }] },
+  { id: 'traceroute', name: 'traceroute', cat: 'red', distro: ['arch', 'debian'], summary: 'Salto a salto hasta un destino: dónde muere la conexión.',
+    breakdown: [
+      { token: '-n', meaning: 'sin resolver nombres (más rápido y legible)' },
+      { token: '-I', meaning: 'usa ICMP en vez de UDP (atraviesa más firewalls)' },
+      { token: '-T -p 443', meaning: 'sondea por TCP a un puerto abierto (el que más pasa)' },
+    ],
+    examples: [
+      { lines: ['traceroute archlinux.org'] },
+      { desc: 'rápido y eficaz contra firewalls', lines: ['traceroute -n -T -p 443 archlinux.org'] },
+    ],
+    whatHappens: 'Envía paquetes con TTL creciente: cada router que lo descarta responde «time exceeded» y revela su IP. * * * = ese salto filtra ICMP o limita respuestas.',
+    alternatives: [{ name: 'tracepath', note: 'sin root, MTU incluido' }],
+    related: ['tracepath', 'mtr', 'ping'],
+    intents: ['dónde falla la conexión', 'ruta de red'] },
+  { id: 'tracepath', name: 'tracepath', cat: 'red', distro: ['arch', 'debian'], summary: 'traceroute sin privilegios, detectando MTU del camino.', examples: [{ lines: ['tracepath 1.1.1.1'] }], related: ['traceroute', 'mtr'], intents: ['ruta sin root', 'mtu'] },
+  { id: 'dig', name: 'dig', cat: 'red', distro: ['arch', 'debian'], summary: 'Consultas DNS precisas (@servidor, tipos A/AAAA/MX/TXT); +short para salida mínima.',
+    breakdown: [
+      { token: '@1.1.1.1', meaning: 'pregunta A ESE servidor (sin @ usa tu resolv.conf)' },
+      { token: 'MX / TXT / AAAA / PTR', meaning: 'tipo de registro (correo, verificación, IPv6, inversa)' },
+      { token: '+short', meaning: 'solo la respuesta, ideal para scripts' },
+      { token: '+trace', meaning: 'itera la jerarquía raíz→TLD→autoritativo (didáctico, lento)' },
+    ],
+    examples: [
+      { lines: ['dig archlinux.org +short', 'dig @1.1.1.1 example.com MX'] },
+      { desc: '¿quién responde y en cuánto tiempo?', lines: ['dig archlinux.org | grep -E "SERVER|Query time"'] },
+    ],
+    errors: [
+      { symptom: 'status: SERVFAIL.', cause: 'DNSSEC roto o resolver con problemas.', fix: 'Prueba @1.1.1.1 para aislar: si ahí funciona, tu resolver falla.' },
+      { symptom: 'connection timed out; no servers could be reached.', fix: 'Sin ruta al DNS (¿gateway? ¿firewall UDP/53?) o resolv.conf vacío: mira ip route y resolvectl.' },
+    ],
+    alternatives: [{ name: 'resolvectl query', note: 'integrado con systemd-resolved' }],
+    related: ['host', 'nslookup'],
+    intents: ['consultar dns', 'resolver dominio', 'registros mx txt'] },
+  { id: 'nslookup', name: 'nslookup', cat: 'red', distro: ['arch', 'debian'], summary: 'DNS interactivo clásico (legado, sigue útil en Windows para comparar).', examples: [{ lines: ['nslookup github.com', 'nslookup github.com 1.1.1.1'] }], related: ['dig', 'host'], intents: ['dns sencillo'] },
+  { id: 'hostname', name: 'hostname', cat: 'red', distro: ['arch', 'debian'], summary: 'Muestra o fija (temporal) el nombre del equipo.', examples: [{ lines: ['hostname'] }], related: ['hostnamectl'], intents: ['nombre del equipo'] },
+  { id: 'hostnamectl', name: 'hostnamectl', cat: 'red', distro: ['arch', 'debian'], summary: 'systemd: hostname persistente + info OS/kernel/arch.', examples: [{ lines: ['hostnamectl', 'sudo hostnamectl set-hostname mi-arch'] }], related: ['hostname'], intents: ['cambiar hostname permanente', 'info sistema operativo'] },
 
   /* ===================================== FIREWALL ===================================== */
   {
@@ -519,8 +713,29 @@ const CORE_COMMANDS: CommandEntry[] = [
     errors: [{ symptom: 'Docker publica puertos y saltan el firewall.', fix: 'Publica en loopback (-p 127.0.0.1:5432:5432) o filtra en DOCKER-USER.' }],
     intents: ['firewall fácil', 'bloquear entrantes', 'abrir puerto firewall', 'ufw activar'],
   },
-  { id: 'nft', name: 'nft', cat: 'firewall', distro: ['arch', 'debian'], summary: 'nftables nativo: tables/chains/rules declarativos; sucede a iptables.', examples: [{ lines: ['sudo nft list ruleset', 'sudo nft add rule inet filter input tcp dport 22 accept'] }], intents: ['firewall avanzado', 'reglas nftables'] },
-  { id: 'iptables', name: 'iptables', cat: 'firewall', distro: ['arch', 'debian'], summary: 'Legado aún presente (y usado por Docker internamente). Nuevo código: nft.', examples: [{ lines: ['sudo iptables -L -n -v'] }], intents: ['iptables legacy', 'ver reglas iptables'] },
+  { id: 'nft', name: 'nft', cat: 'firewall', distro: ['arch', 'debian'], summary: 'nftables nativo: tables/chains/rules declarativos; sucede a iptables.',
+    breakdown: [
+      { token: 'table inet filter', meaning: 'tabla (familia inet = IPv4+IPv6 a la vez)' },
+      { token: 'chain … { type filter hook input priority 0; policy drop; }', meaning: 'cadena enganchada a la entrada con política por defecto' },
+      { token: 'add rule … tcp dport 22 accept', meaning: 'regla: acepta SSH entrante' },
+    ],
+    examples: [
+      { desc: 'ver reglas actuales', lines: ['sudo nft list ruleset'] },
+      { desc: 'mínimo funcional (una vez): tabla + cadena + abrir SSH', lines: ['sudo nft add table inet filter', 'sudo nft add chain inet filter input { type filter hook input priority 0 \\; policy drop \\; }', 'sudo nft add rule inet filter input tcp dport 22 accept'] },
+    ],
+    errors: [{ symptom: 'Error: Could not process rule: No such file or directory.', cause: 'La tabla o cadena no existe todavía.', fix: 'Créalas primero (ver ejemplo) o usa ufw/firewalld como vía fácil.' }],
+    warnNote: 'Una política drop con la cadena mal creada puede dejarte fuera por SSH: prueba siempre en una sesión de repuesto o con un temporizador de rescate.',
+    intents: ['firewall avanzado', 'reglas nftables'] },
+  { id: 'iptables', name: 'iptables', cat: 'firewall', distro: ['arch', 'debian'], summary: 'Legado aún presente (y usado por Docker internamente). Nuevo código: nft.',
+    breakdown: [
+      { token: '-L', meaning: 'lista reglas' },
+      { token: '-n', meaning: 'numérico (sin resolver DNS: rápido)' },
+      { token: '-v', meaning: 'contadores de paquetes/bytes por regla' },
+    ],
+    examples: [{ lines: ['sudo iptables -L -n -v'] }],
+    errors: [{ symptom: 'Veo cadenas DOCKER-* que yo no creé.', cause: 'Docker gestiona sus propias reglas (bypassa ufw).', fix: 'No las edites a mano: configura DOCKER-USER o publica en 127.0.0.1.' }],
+    related: ['nft', 'ufw'],
+    intents: ['iptables legacy', 'ver reglas iptables'] },
 
   /* ======================================== SSH ======================================== */
   {
@@ -619,7 +834,21 @@ const CORE_COMMANDS: CommandEntry[] = [
     intents: ['confirmar cambios', 'hacer commit'],
   },
   { id: 'git-push', name: 'git push', cat: 'git', distro: ['arch', 'debian'], summary: 'Sube commits al remoto; -u origin rama vincula por primera vez.', examples: [{ lines: ['git push -u origin mi-feature'] }], intents: ['subir commits', 'publicar cambios'] },
-  { id: 'git-pull', name: 'git pull', cat: 'git', distro: ['arch', 'debian'], summary: 'Trae e integra cambios remotos (fetch+merge; pull --rebase para historial lineal).', examples: [{ lines: ['git pull --rebase'] }], intents: ['descargar cambios', 'sincronizar repo'] },
+  { id: 'git-pull', name: 'git pull', cat: 'git', distro: ['arch', 'debian'], summary: 'Trae e integra cambios remotos (fetch+merge; pull --rebase para historial lineal).',
+    breakdown: [
+      { token: 'git pull', meaning: 'fetch + merge: crea commit de merge si divergiste' },
+      { token: '--rebase', meaning: 'reaplica TUS commits encima de lo remoto (historial lineal, preferido en ramas propias)' },
+      { token: '--ff-only', meaning: 'solo avanza si no hay divergencia; si la hay, aborta (lo más seguro)' },
+    ],
+    examples: [
+      { lines: ['git pull --rebase'] },
+      { desc: 'primero mirar, luego integrar', lines: ['git fetch origin', 'git status -sb', 'git pull --ff-only'] },
+    ],
+    errors: [
+      { symptom: 'CONFLICT al hacer pull.', fix: 'Resuelve marcadores <<<<<<<, git add y git rebase --continue (o --abort para rendirte sin romper nada).' },
+      { symptom: 'There is no tracking information.', fix: 'git branch --set-upstream-to=origin/rama o usa git pull origin rama.' },
+    ],
+    intents: ['descargar cambios', 'sincronizar repo'] },
   { id: 'git-branch', name: 'git branch', cat: 'git', distro: ['arch', 'debian'], summary: 'Lista/crea ramas; git switch -c es la forma moderna de crear+y cambiar.', examples: [{ lines: ['git branch', 'git switch -c hotfix'] }], intents: ['crear rama', 'listar ramas'] },
   { id: 'git-checkout', name: 'git checkout', cat: 'git', distro: ['arch', 'debian'], summary: 'Cambia de rama o restaura archivos; hoy dividido en switch (ramas) y restore (archivos).', examples: [{ lines: ['git checkout main', 'git restore archivo.py'] }], intents: ['cambiar de rama', 'deshacer cambios archivo'] },
 
@@ -644,9 +873,22 @@ const CORE_COMMANDS: CommandEntry[] = [
   {
     id: 'docker-compose', name: 'docker compose', cat: 'docker', distro: ['arch', 'debian'],
     summary: 'Orquesta stacks multi-contenedor desde compose.yaml: up/down/logs/ps.',
-    examples: [{ lines: ['docker compose up -d', 'docker compose logs -f app', 'docker compose down'] }],
+    breakdown: [
+      { token: 'up -d', meaning: 'crea la red, volúmenes y arranca todo en segundo plano' },
+      { token: 'logs -f app', meaning: 'sigue logs de UN servicio del stack' },
+      { token: 'ps / exec app sh', meaning: 'estado del stack / shell dentro de un servicio' },
+      { token: 'down (-v)', meaning: 'para y elimina contenedores/red (-v además borra volúmenes: ¡datos!)' },
+    ],
+    examples: [
+      { lines: ['docker compose up -d', 'docker compose logs -f app', 'docker compose down'] },
+      { desc: 'reconstruir tras cambiar el Dockerfile', lines: ['docker compose up -d --build'] },
+    ],
+    errors: [
+      { symptom: 'Cannot connect to the Docker daemon.', fix: 'Activa el servicio (systemctl start docker) y mete tu usuario al grupo docker (luego re-login).' },
+      { symptom: 'port is already allocated.', fix: 'Otro contenedor/proceso usa ese puerto: docker ps y ss -tulpn para encontrarlo.' },
+    ],
     intents: ['levantar stack', 'compose up', 'varios contenedores'],
   },
 ]
 
-export const COMMANDS: CommandEntry[] = [...CORE_COMMANDS, ...EXTRA_COMMANDS, ...MORE_COMMANDS]
+export const COMMANDS: CommandEntry[] = [...CORE_COMMANDS, ...EXTRA_COMMANDS, ...MORE_COMMANDS, ...ADMIN_COMMANDS]

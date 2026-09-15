@@ -25,6 +25,7 @@ export default function StepCard({ step, index }: { step: Step; index: number })
         <button
           role="checkbox"
           aria-checked={done}
+          aria-label={done ? `Marcar paso "${step.title}" como pendiente` : `Marcar paso "${step.title}" como completado`}
           onClick={() => toggleDone(step.id)}
           title={done ? 'Marcar como pendiente' : 'Marcar paso como completado'}
           className={cn(
@@ -53,6 +54,7 @@ export default function StepCard({ step, index }: { step: Step; index: number })
         <button
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
+          aria-label={open ? `Contraer paso "${step.title}"` : `Expandir paso "${step.title}"`}
           className="rounded-md border border-zinc-800 p-1 text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-300"
           title={open ? 'Contraer' : 'Expandir'}
         >
