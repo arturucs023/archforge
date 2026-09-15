@@ -13,6 +13,8 @@ import { expert } from './content/expert'
 import { networking1 } from './content/networking1'
 import { networking2 } from './content/networking2'
 import { networking3 } from './content/networking3'
+import { databases1 } from './content/databases1'
+import { databases2 } from './content/databases2'
 
 const CONTENT = {
   ...fundamentals,
@@ -27,6 +29,8 @@ const CONTENT = {
   ...networking1,
   ...networking2,
   ...networking3,
+  ...databases1,
+  ...databases2,
 } as Record<string, SectionContent>
 CONTENT['installation'] = installation
 

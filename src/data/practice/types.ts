@@ -15,6 +15,12 @@ export type PracticeCat =
   | 'ospf'
   | 'bgp'
   | 'nat'
+  | 'databases'
+  | 'sql'
+  | 'modeling'
+  | 'postgresql'
+  | 'mariadb'
+  | 'dbsec'
 
 export type PracticeDiff = 'beginner' | 'intermediate' | 'advanced'
 
@@ -32,6 +38,12 @@ export const PRACTICE_CATS: { id: PracticeCat; label: string }[] = [
   { id: 'ospf', label: 'OSPF' },
   { id: 'bgp', label: 'BGP' },
   { id: 'nat', label: 'NAT' },
+  { id: 'databases', label: 'Bases de datos' },
+  { id: 'sql', label: 'SQL' },
+  { id: 'modeling', label: 'Modelado' },
+  { id: 'postgresql', label: 'PostgreSQL' },
+  { id: 'mariadb', label: 'MariaDB' },
+  { id: 'dbsec', label: 'Seguridad BD' },
 ]
 
 export const PRACTICE_DIFF_LABEL: Record<PracticeDiff, string> = {

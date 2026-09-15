@@ -25,6 +25,7 @@ import {
   Globe,
   GraduationCap,
   Hammer,
+  HardDrive,
   Hash,
   History,
   KeyRound,
@@ -48,6 +49,7 @@ import {
   Server,
   Shapes,
   Share2,
+  ShieldAlert,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
@@ -60,6 +62,7 @@ import {
   Volume2,
   Wifi,
   Wine,
+  Wrench,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -72,6 +75,8 @@ export const ICONS: Record<string, LucideIcon> = {
   users: Users,
   pacman: Package,
   aur: PackageSearch,
+  apt: Archive,
+  apk: HardDrive,
   network: Wifi,
   audio: Volume2,
   gpu: CircuitBoard,
@@ -121,6 +126,14 @@ export const ICONS: Record<string, LucideIcon> = {
   'net-nat': Repeat,
   'net-servicios': Server,
   'net-seguridad': Lock,
+  'db-fundamentos': Database,
+  'db-modelado': Shapes,
+  'db-sql': Braces,
+  'db-sql-avanzado': Boxes,
+  'db-postgresql': Server,
+  'db-mariadb': HardDrive,
+  'db-admin': Wrench,
+  'db-seguridad': ShieldAlert,
 }
 
 export const TOOL_ICONS: Record<string, LucideIcon> = {

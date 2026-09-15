@@ -158,6 +158,8 @@ export function achievements(
     { id: 'vlsm-reto', label: 'VLSM resuelto', desc: 'Completa el reto de diseño VLSM.', unlocked: isChallengeDone(state, 'ch-vlsm') },
     { id: 'primer-examen', label: 'Primer examen', desc: 'Termina tu primer modo examen.', unlocked: st.examsTaken >= 1 },
     { id: 'examen-90', label: 'Examen 90+', desc: 'Saca 90 o más en un examen.', unlocked: st.bestScore >= 90 },
+    { id: 'db-fundamentos', label: 'Mundo relacional', desc: 'Completa Fundamentos de bases de datos.', unlocked: sectionComplete(isDone, 'db-fundamentos') },
+    { id: 'sql-reto', label: 'SQL esencial', desc: 'Completa el reto de SQL esencial.', unlocked: isChallengeDone(state, 'ch-sql') },
   ]
   return defs
 }
@@ -291,7 +293,8 @@ export function catLabel(cat: PracticeCat): string {
     {
       linux: 'Linux', bash: 'Bash', redes: 'Redes', ipv4: 'IPv4', subnetting: 'Subnetting',
       vlsm: 'VLSM', ipv6: 'IPv6', vlan: 'VLAN', stp: 'STP', routing: 'Routing',
-      ospf: 'OSPF', bgp: 'BGP', nat: 'NAT',
+      ospf: 'OSPF', bgp: 'BGP', nat: 'NAT', databases: 'Bases de datos', sql: 'SQL',
+      modeling: 'Modelado', postgresql: 'PostgreSQL', mariadb: 'MariaDB', dbsec: 'Seguridad BD',
     } as Record<PracticeCat, string>
   )[cat]
 }

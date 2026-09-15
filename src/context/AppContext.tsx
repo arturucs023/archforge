@@ -38,7 +38,7 @@ function load(): PersistState {
         lastSection: parsed.lastSection,
         lastStep: parsed.lastStep,
         builderConfig: parsed.builderConfig,
-        distroView: (['all', 'arch', 'debian'] as const).includes(parsed.distroView as DistroView)
+        distroView: (['all', 'arch', 'debian', 'alpine'] as const).includes(parsed.distroView as DistroView)
           ? (parsed.distroView as DistroView)
           : 'all',
         welcomeDone: parsed.welcomeDone ?? false,
@@ -137,7 +137,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         builderConfig: parsed.builderConfig,
         shellMode: parsed.shellMode === 'root' ? 'root' : 'user',
         level: (['beginner', 'intermediate', 'expert'] as const).includes(parsed.level) ? parsed.level : s.level,
-        distroView: (['all', 'arch', 'debian'] as const).includes(parsed.distroView) ? parsed.distroView : s.distroView,
+        distroView: (['all', 'arch', 'debian', 'alpine'] as const).includes(parsed.distroView) ? parsed.distroView : s.distroView,
         welcomeDone: typeof parsed.welcomeDone === 'boolean' ? parsed.welcomeDone : s.welcomeDone,
         lastPath: parsed.lastPath,
         lastLabel: parsed.lastLabel,

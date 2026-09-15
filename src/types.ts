@@ -160,7 +160,7 @@ export interface LinkListBlock extends BlockBase {
   links: { label: string; to: string }[]
 }
 /** Visualización interactiva de networking (comprensión, no laboratorio). */
-export type NetvizId = 'encap' | 'vlsm' | 'stp' | 'nat' | 'ospf' | 'bgp'
+export type NetvizId = 'encap' | 'vlsm' | 'stp' | 'nat' | 'ospf' | 'bgp' | 'sqlquery' | 'joins' | 'normforms' | 'indexseek' | 'txn' | 'erdiagram'
 export interface NetvizBlock extends BlockBase {
   type: 'netviz'
   viz: NetvizId
@@ -318,8 +318,8 @@ export interface BuilderResult {
 
 /* ===================== Iteración 2: multi-área ===================== */
 
-export type Distro = 'arch' | 'debian'
-export type DistroView = 'all' | 'arch' | 'debian'
+export type Distro = 'arch' | 'debian' | 'alpine'
+export type DistroView = 'all' | 'arch' | 'debian' | 'alpine'
 
 export interface QuizOption {
   text: string

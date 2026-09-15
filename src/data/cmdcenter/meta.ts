@@ -33,6 +33,7 @@ export type CatId =
   | 'editores'
   | 'git'
   | 'docker'
+  | 'bases-datos'
 
 export interface CmdExample {
   desc?: string
@@ -96,11 +97,13 @@ export const CATS: Category[] = [
   { id: 'editores', label: 'Editores' },
   { id: 'git', label: 'Git' },
   { id: 'docker', label: 'Docker' },
+  { id: 'bases-datos', label: '🗄️ Bases de datos' },
 ]
 
 export const DISTRO_LABEL: Record<Distro, string> = {
   arch: 'Arch',
   debian: 'Debian/Ubuntu',
+  alpine: 'Alpine',
 }
 
 /* ----------------------------- Símbolos del shell ---------------------------- */
@@ -133,12 +136,13 @@ export const SYMBOLS: ShellSymbol[] = [
   { symbol: '--', name: 'Fin de opciones', meaning: 'Todo lo que viene después NO se interpreta como opción, aunque empiece por guion. Protege nombres de archivo raros.', example: 'rm -- --archivo-raro', exampleExplain: 'Borra un archivo llamado literalmente «--archivo-raro».' },
 ]
 
-/* --------------------- Equivalencias Arch ↔ Debian/Ubuntu -------------------- */
+/* ------------------ Equivalencias Arch ↔ Debian/Ubuntu ↔ Alpine ------------------ */
 
 export interface EquivRow {
   task: string
   archLines: string[]
   debianLines: string[]
+  alpineLines?: string[]
   explain: string
 }
 
@@ -147,54 +151,63 @@ export const EQUIVALENCES: EquivRow[] = [
     task: 'Actualizar el sistema completo',
     archLines: ['sudo pacman -Syu'],
     debianLines: ['sudo apt update && sudo apt upgrade'],
-    explain: 'Pacman SIEMPRE sincroniza índices e instala todo junto (-Syu): no existen las actualizaciones parciales. apt las separa en dos pasos: update refresca los índices y upgrade aplica versiones nuevas. Olvidar update antes de upgrade instala contra índices viejos.',
+    alpineLines: ['sudo apk update && sudo apk upgrade'],
+    explain: 'Pacman SIEMPRE sincroniza índices e instala todo junto (-Syu): no existen las actualizaciones parciales. apt y apk las separan en dos pasos: update refresca los índices y upgrade aplica versiones nuevas. Olvidar update antes de upgrade instala contra índices viejos.',
   },
   {
     task: 'Instalar un programa',
     archLines: ['sudo pacman -S nombre'],
     debianLines: ['sudo apt install nombre'],
-    explain: 'Misma idea, repos distintos. En Arch el paquete puede estar además en AUR (yay/paru); en Debian/Ubuntu revisa variantes (paquete, paquete-dbg…) con apt search.',
+    alpineLines: ['sudo apk add nombre'],
+    explain: 'Misma idea, repos distintos. En Arch el paquete puede estar además en AUR (yay/paru); en Debian/Ubuntu revisa variantes (paquete, paquete-dbg…) con apt search. En Alpine, apk add --no-cache evita guardar el índice (típico en Docker).',
   },
   {
     task: 'Buscar un paquete',
     archLines: ['pacman -Ss término'],
     debianLines: ['apt search término'],
-    explain: 'Ambos consultan los repositorios remotos configurados. En Arch, -Fy + pacman -F busca incluso ARCHIVOS dentro de paquetes que no tienes instalados.',
+    alpineLines: ['apk search término'],
+    explain: 'Los tres consultan los repositorios remotos configurados. En Arch, -Fy + pacman -F busca incluso ARCHIVOS dentro de paquetes que no tienes instalados.',
   },
   {
     task: 'Eliminar un programa',
     archLines: ['sudo pacman -Rns nombre'],
     debianLines: ['sudo apt remove nombre', 'sudo apt purge nombre'],
-    explain: '-Rns borra también dependencias huérfanas (-s) y configs del sistema (-n). En apt, remove deja las configs; purge las elimina. autoremove limpia huérfanos después.',
+    alpineLines: ['sudo apk del nombre'],
+    explain: '-Rns borra también dependencias huérfanas (-s) y configs del sistema (-n). En apt, remove deja las configs; purge las elimina. autoremove limpia huérfanos después. apk del elimina el paquete; para huérfanos instala dependencias temporales con --virtual y bórralas en bloque.',
   },
   {
     task: 'Info de un paquete instalado',
     archLines: ['pacman -Qi nombre'],
     debianLines: ['apt show nombre', 'dpkg -s nombre'],
-    explain: 'apt show funciona también con paquetes NO instalados (lee índices). dpkg consulta directamente la base local.',
+    alpineLines: ['apk info -a nombre'],
+    explain: 'apt show funciona también con paquetes NO instalados (lee índices). dpkg consulta directamente la base local. apk info -a muestra descripción, tamaño y dependencias.',
   },
   {
     task: 'Listar paquetes instalados',
     archLines: ['pacman -Q'],
     debianLines: ['apt list --installed', 'dpkg -l'],
-    explain: 'pacman -Qe lista solo los que TÚ instalaste explícitamente; útil para replicar sistemas.',
+    alpineLines: ['apk info', 'apk info -v'],
+    explain: 'pacman -Qe lista solo los que TÚ instalaste explícitamente; útil para replicar sistemas. apk info -v añade versiones.',
   },
   {
     task: 'A qué paquete pertenece un archivo',
     archLines: ['pacman -Qo /ruta/archivo'],
     debianLines: ['dpkg -S /ruta/archivo'],
-    explain: 'Ambos consultan la base local de archivos. Para archivos de paquetes SIN instalar: pacman -Fy && pacman -F archivo vs apt-file (requiere instalarlo y apt-file update).',
+    alpineLines: ['apk info -W /ruta/archivo'],
+    explain: 'Los tres consultan la base local de archivos (apk info -W = who-owns). Para archivos de paquetes SIN instalar: pacman -Fy && pacman -F archivo vs apt-file (requiere instalarlo y apt-file update).',
   },
   {
     task: 'Limpiar caché de paquetes',
     archLines: ['paccache -r'],
     debianLines: ['sudo apt clean', 'sudo apt autoclean'],
-    explain: 'paccache conserva N versiones por paquete (rollback seguro). apt clean vacía TODO /var/cache/apt/archives; autoclean solo paquetes ya obsoletos.',
+    alpineLines: ['sudo apk cache clean'],
+    explain: 'paccache conserva N versiones por paquete (rollback seguro). apt clean vacía TODO /var/cache/apt/archives; autoclean solo paquetes ya obsoletos. apk cache clean vacía /etc/apk/cache.',
   },
   {
     task: 'Huérfanos y limpieza',
     archLines: ['pacman -Qtdq', 'sudo pacman -Rns $(pacman -Qtdq)'],
     debianLines: ['sudo apt autoremove'],
-    explain: 'apt integra la limpieza en autoremove; en Arch es manual y deliberado: miras la lista ANTES de borrar.',
+    alpineLines: ['# sin equivalente directo', 'sudo apk add --virtual .build-deps gcc make', 'sudo apk del .build-deps'],
+    explain: 'apt integra la limpieza en autoremove; en Arch es manual y deliberado: miras la lista ANTES de borrar. apk no tiene autoremove: el patrón --virtual agrupa dependencias temporales para borrarlas en bloque.',
   },
 ]

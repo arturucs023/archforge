@@ -11,10 +11,12 @@ import {
 import { useApp } from '../context/AppContext'
 import { navigate } from '../lib/router'
 import { allAreas } from '../lib/progress'
+import { REGISTRY, stepUnits } from '../data/registry'
 import ProgressBar from '../components/ProgressBar'
 import { cn } from '../lib/utils'
+import type { LucideIcon } from 'lucide-react'
 
-const OPTIONS = [
+const OPTIONS: { to: string; icon: LucideIcon; emoji: string; title: string; desc: string; cta: string; accent: 'sky' | 'emerald' | 'teal' | 'cyan' | 'violet' | 'amber' | 'rose' | 'indigo' | 'orange'; group?: string }[] = [
   {
     to: '/arch',
     icon: Flame,
@@ -22,7 +24,7 @@ const OPTIONS = [
     title: 'Aprender Arch Linux',
     desc: 'Instala Arch Linux desde cero y construye tu propio sistema.',
     cta: 'Empezar →',
-    accent: 'sky' as const,
+    accent: 'sky',
   },
   {
     to: '/commands',
@@ -31,7 +33,7 @@ const OPTIONS = [
     title: 'Comandos Linux',
     desc: 'Aprende y consulta comandos de Linux con una cheatsheet interactiva para Arch, Debian y Ubuntu.',
     cta: 'Explorar comandos →',
-    accent: 'emerald' as const,
+    accent: 'emerald',
   },
   {
     to: '/bash',
@@ -40,7 +42,7 @@ const OPTIONS = [
     title: 'Curso de Bash',
     desc: 'Aprende Bash desde cero y automatiza Linux mediante scripts.',
     cta: 'Empezar curso →',
-    accent: 'teal' as const,
+    accent: 'teal',
   },
   {
     to: '/learn',
@@ -49,7 +51,27 @@ const OPTIONS = [
     title: 'Aprender Linux',
     desc: 'Aprende los fundamentos de Linux y entiende qué ocurre realmente detrás de cada comando.',
     cta: 'Empezar aprendizaje →',
-    accent: 'violet' as const,
+    accent: 'violet',
+  },
+  {
+    to: '/section/net-fundamentos',
+    icon: SquareTerminal,
+    emoji: '🌐',
+    title: 'Redes de computadores',
+    desc: 'De LANs a BGP: direccionamiento, switching, routing y visualizaciones interactivas.',
+    cta: 'Empezar →',
+    accent: 'indigo',
+    group: 'redes',
+  },
+  {
+    to: '/section/db-fundamentos',
+    icon: SquareTerminal,
+    emoji: '🗄️',
+    title: 'Bases de datos',
+    desc: 'Modela, consulta con SQL y opera PostgreSQL y MariaDB en Linux.',
+    cta: 'Empezar →',
+    accent: 'orange',
+    group: 'databases',
   },
   {
     to: '/terminal',
@@ -58,7 +80,7 @@ const OPTIONS = [
     title: 'Laboratorios CLI',
     desc: 'Practica en una terminal Linux simulada con laboratorios validados paso a paso.',
     cta: 'Abrir terminal →',
-    accent: 'cyan' as const,
+    accent: 'cyan',
   },
   {
     to: '/troubleshooting',
@@ -67,7 +89,7 @@ const OPTIONS = [
     title: 'Solucionar un problema',
     desc: 'Diagnostica problemas habituales de Linux paso a paso.',
     cta: 'Buscar problema →',
-    accent: 'amber' as const,
+    accent: 'amber',
   },
   {
     to: '/builder',
@@ -76,7 +98,7 @@ const OPTIONS = [
     title: 'Construir mi sistema',
     desc: 'Elige hardware, filesystem, escritorio, shell y objetivo y crea una configuración personalizada.',
     cta: 'Crear configuración →',
-    accent: 'rose' as const,
+    accent: 'rose',
   },
 ]
 
@@ -88,6 +110,8 @@ const ACCENT = {
   violet: { border: 'hover:border-violet-500/50', icon: 'text-violet-400 bg-violet-500/10 border-violet-500/30', btn: 'border-violet-500/50 text-violet-300 hover:bg-violet-500/15', bar: 'bg-violet-500' },
   amber: { border: 'hover:border-amber-500/50', icon: 'text-amber-400 bg-amber-500/10 border-amber-500/30', btn: 'border-amber-500/50 text-amber-300 hover:bg-amber-500/15', bar: 'bg-amber-500' },
   rose: { border: 'hover:border-rose-500/50', icon: 'text-rose-400 bg-rose-500/10 border-rose-500/30', btn: 'border-rose-500/50 text-rose-300 hover:bg-rose-500/15', bar: 'bg-rose-500' },
+  indigo: { border: 'hover:border-indigo-500/50', icon: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30', btn: 'border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/15', bar: 'bg-indigo-500' },
+  orange: { border: 'hover:border-orange-500/50', icon: 'text-orange-400 bg-orange-500/10 border-orange-500/30', btn: 'border-orange-500/50 text-orange-300 hover:bg-orange-500/15', bar: 'bg-orange-500' },
 }
 
 export default function HomePage() {
@@ -171,6 +195,16 @@ export default function HomePage() {
                   <span className="mt-2 block">
                     <ProgressBar value={bash.done} max={bash.total} color={ACCENT.teal.bar} />
                     <span className="mt-1 block font-mono text-[10px] tabular-nums text-zinc-600">{bash.done}/{bash.total} · en curso</span>
+                  </span>
+                ) : null
+              })()}
+              {o.group && (() => {
+                const units = REGISTRY.filter((s) => s.group === o.group).flatMap((s) => stepUnits(s))
+                const done = units.filter((u) => isDone(u)).length
+                return done > 0 ? (
+                  <span className="mt-2 block">
+                    <ProgressBar value={done} max={units.length} color={A.bar} />
+                    <span className="mt-1 block font-mono text-[10px] tabular-nums text-zinc-600">{done}/{units.length} · en curso</span>
                   </span>
                 ) : null
               })()}
@@ -281,11 +315,12 @@ function TypewriterSubtitle() {
       aria-label={HERO_SUB}
       className="mx-auto mt-3 grid w-fit justify-items-start font-mono text-sm uppercase tracking-[0.25em] text-sky-400/90"
     >
-      {/* copia invisible: fija el ancho final → sin layout shift ni overflow */}
-      <span aria-hidden className="invisible col-start-1 row-start-1 whitespace-nowrap">
+      {/* copia invisible: fija el ancho final → sin layout shift ni overflow.
+          En móvil permite salto de línea: mejor dos líneas que 153 px de scroll lateral. */}
+      <span aria-hidden className="invisible col-start-1 row-start-1 whitespace-normal sm:whitespace-nowrap">
         {HERO_SUB}
       </span>
-      <span aria-hidden className="col-start-1 row-start-1 whitespace-nowrap">
+      <span aria-hidden className="col-start-1 row-start-1 whitespace-normal sm:whitespace-nowrap">
         {HERO_SUB.slice(0, count)}
         <span className={cn('transition-opacity duration-500', cursorOn ? 'opacity-100' : 'opacity-0')}>
           ▌

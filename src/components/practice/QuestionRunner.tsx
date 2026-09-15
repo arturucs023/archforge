@@ -8,7 +8,7 @@ import { navigate } from '../../lib/router'
 import { cn } from '../../lib/utils'
 
 export function normText(s: string): string {
-  return s.toLowerCase().replace(/["'`]/g, '').replace(/\s+/g, ' ').trim()
+  return s.toLowerCase().replace(/["'`]/g, '').replace(/\s+/g, ' ').trim().replace(/;+\s*$/, '')
 }
 
 export function normCidr(s: string): string {

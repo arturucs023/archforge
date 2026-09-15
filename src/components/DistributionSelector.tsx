@@ -5,7 +5,8 @@ import { cn } from '../lib/utils'
 const OPTIONS: { value: DistroView; label: string }[] = [
   { value: 'arch', label: 'Arch' },
   { value: 'debian', label: 'Debian/Ubuntu' },
-  { value: 'all', label: 'Ambas' },
+  { value: 'alpine', label: 'Alpine' },
+  { value: 'all', label: 'Todas' },
 ]
 
 export default function DistributionSelector() {
@@ -23,7 +24,9 @@ export default function DistributionSelector() {
               ? 'Muestra comandos de todas las distribuciones'
               : o.value === 'arch'
                 ? 'Solo comandos aplicables a Arch Linux (pacman, yay…)'
-                : 'Solo comandos aplicables a Debian y Ubuntu (apt, dpkg…)'
+                : o.value === 'debian'
+                  ? 'Solo comandos aplicables a Debian y Ubuntu (apt, dpkg…)'
+                  : 'Solo comandos aplicables a Alpine Linux (apk, OpenRC…)'
           }
           className={cn(
             'px-3 py-1.5 font-mono text-xs font-medium transition-colors',

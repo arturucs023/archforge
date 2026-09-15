@@ -1,0 +1,356 @@
+import type { SectionContent } from '../../types'
+import { p, h, ul, ol, cmd, out, info, tip, warn, deep, tbl, file, viz } from '../helpers'
+
+export const databases1: Record<string, SectionContent> = {
+  'db-fundamentos': {
+    related: ['db-modelado', 'db-sql', 'net-servicios'],
+    steps: [
+      {
+        id: 'dbfun-01-que-es-bd',
+        title: 'Qué es una base de datos (y qué no)',
+        goal: 'Distinguir datos, información, BD y SGBD, y saber cuándo un archivo plano deja de bastar.',
+        importance: 'required',
+        minutes: 12,
+        blocks: [
+          p('Datos son hechos sueltos («Ana», 34, «Bilbao»); información son datos organizados que responden algo («clientes mayores de 30 por ciudad»). Una base de datos (BD) es un conjunto organizado y persistente de datos con reglas; un SGBD (Sistema Gestor, DBMS en inglés: PostgreSQL, MariaDB…) es el SOFTWARE que la almacena, protege y consulta. Confundir BD con SGBD es el error nº 1 del principiante.'),
+          h('Archivos planos frente a BD'),
+          tbl(
+            ['Aspecto', 'Archivos planos / CSV', 'Base de datos + SGBD'],
+            [
+              ['Acceso concurrente', 'Dos escritores = corrupción casi segura', 'Transacciones y bloqueos: miles de usuarios a la vez'],
+              ['Búsquedas', 'Leer todo el archivo cada vez', 'Índices: respuesta en milisegundos'],
+              ['Integridad', 'Nada impide duplicados o datos rotos', 'Claves y restricciones lo impiden por diseño'],
+              ['Permisos', 'Permisos del SO sobre el archivo entero', 'Usuarios, roles y permisos por tabla/columna'],
+              ['Recuperación', 'Copia manual o nada', 'Backups, WAL y point-in-time recovery'],
+            ],
+          ),
+          info('Regla práctica', 'Un CSV vale para datos de usar y tirar. En cuanto hay varios escritores, búsquedas frecuentes o datos que no pueden corromperse, necesitas un SGBD.'),
+        ],
+        expect: 'Explicas con tus palabras dato/información/BD/SGBD y decides plano vs BD ante un caso.',
+      },
+      {
+        id: 'dbfun-02-relacional',
+        title: 'El modelo relacional: tablas, claves e integridad',
+        goal: 'Leer cualquier esquema relacional: PK, FK, relaciones e integridad referencial.',
+        importance: 'required',
+        minutes: 15,
+        blocks: [
+          p('El modelo relacional organiza todo en TABLAS (relaciones): COLUMNAS con tipo fijo (campos) y FILAS (registros/tuplas). Cada tabla tiene una CLAVE PRIMARIA (PK): columna(s) que identifica cada fila de forma única y nunca nula (p. ej. cliente_id). Las tablas se conectan con CLAVES FORÁNEAS (FK): una columna que referencia la PK de otra tabla.'),
+          file('esquema-tienda.sql', 'CREATE TABLE clientes (\n  cliente_id  SERIAL PRIMARY KEY,\n  nombre      VARCHAR(100) NOT NULL,\n  email       VARCHAR(200) UNIQUE NOT NULL\n);\n\nCREATE TABLE pedidos (\n  pedido_id   SERIAL PRIMARY KEY,\n  cliente_id  INTEGER NOT NULL REFERENCES clientes(cliente_id),\n  fecha       DATE NOT NULL DEFAULT CURRENT_DATE,\n  total       NUMERIC(10,2) NOT NULL CHECK (total >= 0)\n);', 'Dos tablas unidas por FK: cada pedido pertenece a un cliente.'),
+          h('Integridad referencial y restricciones'),
+          ul('Integridad referencial: el SGBD RECHAZA pedidos de clientes inexistentes y (según regla ON DELETE) impide borrar clientes con pedidos.', 'PRIMARY KEY: unicidad + no nulo en uno.', 'FOREIGN KEY: la referencia debe existir.', 'UNIQUE: sin duplicados (emails).', 'NOT NULL: valor obligatorio.', 'CHECK: condición arbitraria (total >= 0).', 'DEFAULT: valor si no se indica.'),
+          warn('La BD es la última línea de defensa', 'Validar en la aplicación está bien, pero dos apps con el mismo bug escriben basura igual. Las restricciones viven EN la BD porque ningún código las puede saltar por accidente.'),
+        ],
+        expect: 'Identificas PK/FK en un esquema y predices qué inserciones rechaza el SGBD.',
+      },
+      {
+        id: 'dbfun-03-nosql',
+        title: 'Relacional frente a NoSQL (sin hype)',
+        goal: 'Elegir modelo de datos con criterio en vez de por moda.',
+        importance: 'required',
+        minutes: 12,
+        blocks: [
+          p('NoSQL no significa «mejor», significa «no solo relacional»: familias optimizadas para otros patrones. La mayoría de aplicaciones de negocio siguen siendo relacionales porque necesitan relaciones e integridad.'),
+          tbl(
+            ['Familia', 'Estructura', 'Encaja cuando…', 'Ejemplos'],
+            [
+              ['Relacional (SQL)', 'Tablas + JOINs', 'Relaciones, integridad, consultas ad-hoc', 'PostgreSQL, MariaDB'],
+              ['Documento', 'JSON por registro', 'Datos semiestructurados, catálogos', 'MongoDB, CouchDB'],
+              ['Clave-valor', 'K → V opaco', 'Cachés, sesiones, contadores', 'Redis, Memcached'],
+              ['Columnar/familias', 'Columnas distribuidas', 'Series temporales, analítica masiva', 'Cassandra, ClickHouse'],
+              ['Grafos', 'Nodos + aristas', 'Recomendaciones, fraude, redes', 'Neo4j'],
+            ],
+          ),
+          deep('El teorema CAP, en una frase útil', 'Un sistema distribuido no puede dar a la vez consistencia total, disponibilidad total y tolerancia a particiones: elige dos según el caso. Los relacionales clásicos priorizan consistencia (CP); muchas NoSQL, disponibilidad (AP). No lo necesitas para empezar, pero explica POR QUÉ existen familias distintas.', ['PostgreSQL también tiene tipos JSON/JSONB: «relacional o documento» a veces es el mismo motor.']),
+          tip('Para este itinerario', 'Aprendemos relacional + SQL a fondo (unidades 1–4) y luego PostgreSQL y MariaDB (5–6). Es la base que te permite entender cualquier NoSQL después.'),
+        ],
+        expect: 'Justificas relacional vs NoSQL ante 3 casos distintos sin eslóganes.',
+      },
+      {
+        id: 'dbfun-04-resumen',
+        title: 'Resumen y mapa de ruta',
+        goal: 'Consolidar y saber qué sigue.',
+        importance: 'recommended',
+        minutes: 6,
+        blocks: [
+          h('Lo esencial'),
+          ol('Dato ≠ información ≠ BD ≠ SGBD.', 'Relacional = tablas + PK/FK + restricciones.', 'La integridad vive en la BD, no solo en tu código.', 'NoSQL = otras familias para otros patrones, no un reemplazo.'),
+          h('A dónde ir ahora'),
+          ul('db-modelado: diseñar bien antes de crear tablas.', 'db-sql: el lenguaje para hablar con el SGBD.'),
+        ],
+      },
+    ],
+  },
+
+  'db-modelado': {
+    related: ['db-fundamentos', 'db-sql', 'db-sql-avanzado'],
+    steps: [
+      {
+        id: 'dbmod-01-er',
+        title: 'Entidades, atributos y claves',
+        goal: 'Modelar entidades con atributos tipados y elegir claves correctamente.',
+        importance: 'required',
+        minutes: 14,
+        blocks: [
+          p('El modelo entidad-relación (ER) describe QUÉ existe antes de crear tablas. ENTIDAD: cosa con existencia propia (Cliente, Pedido). ATRIBUTO: propiedad (nombre, fecha). Cada atributo tiene dominio (tipo) y puede ser: simple vs compuesto (nombre vs dirección desglosada), monovaluado vs multivaluado (email vs teléfonos), derivado (edad desde nacimiento: no se almacena, se calcula).'),
+          h('Claves'),
+          tbl(
+            ['Clave', 'Qué es', 'Ejemplo'],
+            [
+              ['Candidata', 'Conjunto mínimo que identifica unívocamente', 'DNI, email, (nombre+teléfono)'],
+              ['Primaria (PK)', 'La candidata ELEGIDA. Única y no nula', 'cliente_id serial'],
+              ['Foránea (FK)', 'Referencia a la PK de otra tabla', 'pedidos.cliente_id'],
+              ['Alternativa', 'Candidata no elegida (suele llevar UNIQUE)', 'email si la PK es cliente_id'],
+            ],
+          ),
+          info('Entidades débiles', 'Algunas no se identifican solas: una LÍNEA DE PEDIDO solo existe dentro de su pedido (su PK incluye la FK al pedido). Se modelan como débiles y acaban siendo tablas con PK compuesta.'),
+          tip('PK subrogada vs natural', 'Un id serial (subrogado) nunca cambia aunque el negocio sí (la gente cambia de email/DNI). Regla de oro: PK subrogada inmutable + UNIQUE en los identificadores de negocio.'),
+        ],
+        expect: 'Dado un enunciado, listas entidades, atributos y propones PK/FK.',
+      },
+      {
+        id: 'dbmod-02-cardinalidad',
+        title: 'Relaciones y cardinalidad',
+        goal: 'Leer y diseñar 1:1, 1:N y N:M, incluida la tabla intermedia.',
+        importance: 'required',
+        minutes: 15,
+        blocks: [
+          p('La CARDINALIDAD dice cuántos de A se relacionan con cuántos de B. Tres casos y nada más:'),
+          viz('erdiagram', 'Pulsa cada entidad: atributos, claves y relaciones'),
+          tbl(
+            ['Tipo', 'Ejemplo', 'Cómo se implementa'],
+            [
+              ['1:1 (uno a uno)', 'Persona ↔ DNI', 'FK + UNIQUE en un lado (o misma tabla si siempre van juntos)'],
+              ['1:N (uno a muchos)', 'Cliente → Pedidos', 'FK en el lado N (pedidos.cliente_id). El 90 % de tus relaciones.'],
+              ['N:M (muchos a muchos)', 'Estudiantes ↔ Cursos', 'TABLA INTERMEDIA (matrículas) con dos FK; suele llevar atributos propios (nota, fecha)'],
+            ],
+          ),
+          warn('N:M sin tabla intermedia no existe en relacional', 'Si dibujas N:M directo en tablas, te falta la intermedia. La cardinalidad se lee en AMBOS sentidos: «un pedido tiene UN cliente; un cliente tiene MUCHOS pedidos».'),
+        ],
+        expect: 'Ante un enunciado, dibujas el ER con cardinalidades y nombras la intermedia.',
+      },
+      {
+        id: 'dbmod-03-normalizacion',
+        title: 'Normalización: 1FN, 2FN y 3FN',
+        goal: 'Detectar redundancia y anomalías y normalizar hasta 3FN.',
+        importance: 'required',
+        minutes: 22,
+        blocks: [
+          p('Normalizar = reorganizar para que cada dato viva en UN solo sitio. La herramienta es la DEPENDENCIA FUNCIONAL (X → Y: «conociendo X, Y queda determinado», p. ej. pedido_id → fecha). Sin normalizar aparecen tres ANOMALÍAS:'),
+          tbl(
+            ['Anomalía', 'Síntoma', 'Ejemplo'],
+            [
+              ['Inserción', 'No puedes guardar A sin tener B', 'No puedes dar de alta un curso sin alumnos matriculados'],
+              ['Actualización', 'Cambiar un dato exige tocar N filas (y alguna se olvida)', 'El nombre del cliente repetido en 40 pedidos'],
+              ['Eliminación', 'Borrar una fila destruye información de otra cosa', 'Borrar el último pedido borra los datos del cliente'],
+            ],
+          ),
+          viz('normforms', 'De la tabla rota a 3FN paso a paso'),
+          h('Las tres formas, en orden'),
+          tbl(
+            ['Forma', 'Exige', 'Elimina'],
+            [
+              ['1FN', 'Valores atómicos (nada de listas «Matemáticas, Física» en una celda) + PK definida', 'Grupos repetitivos'],
+              ['2FN (parte de 1FN)', 'Ningún atributo depende SOLO de PARTE de la PK (solo importa con PK compuesta)', 'Dependencias parciales → tablas propias'],
+              ['3FN (parte de 2FN)', 'Ningún atributo depende de otro NO clave (dependencias transitivas fuera)', 'Transitividad → tablas propias'],
+            ],
+          ),
+          deep('¿Y BCNF, 4FN, 5FN?', 'Existen (BCNF refina 3FN para casos raros con varias claves candidatas solapadas). En la práctica profesional, 3FN bien aplicada cubre casi todo; la desnormalización posterior es una decisión CONSCIENTE de rendimiento (contadores, cachés), nunca el punto de partida.', ['Normaliza primero, desnormaliza después y documentando el porqué.']),
+        ],
+        expect: 'Dada una tabla con redundancia, nombras la anomalía y la llevas a 3FN.',
+      },
+      {
+        id: 'dbmod-04-er-a-relacional',
+        title: 'Del ER al modelo relacional (tienda completa)',
+        goal: 'Transformar un ER en tablas listas para crear.',
+        importance: 'required',
+        minutes: 15,
+        blocks: [
+          p('Reglas mecánicas de transformación:'),
+          ol('Cada entidad → tabla con su PK.', '1:N → FK en el lado N.', 'N:M → tabla intermedia con las dos FK (PK compuesta o id propio + UNIQUE).', '1:1 → FK + UNIQUE en un lado.', 'Multivaluados → tabla propia. Derivados → no se almacenan.'),
+          file('tienda.sql', 'CREATE TABLE clientes (\n  cliente_id SERIAL PRIMARY KEY,\n  nombre     VARCHAR(100) NOT NULL,\n  email      VARCHAR(200) UNIQUE NOT NULL\n);\n\nCREATE TABLE productos (\n  producto_id SERIAL PRIMARY KEY,\n  nombre      VARCHAR(100) NOT NULL,\n  precio      NUMERIC(10,2) NOT NULL CHECK (precio >= 0)\n);\n\nCREATE TABLE pedidos (\n  pedido_id  SERIAL PRIMARY KEY,\n  cliente_id INTEGER NOT NULL REFERENCES clientes(cliente_id),\n  fecha      DATE NOT NULL DEFAULT CURRENT_DATE\n);\n\nCREATE TABLE lineas_pedido (\n  pedido_id   INTEGER NOT NULL REFERENCES pedidos(pedido_id),\n  producto_id INTEGER NOT NULL REFERENCES productos(producto_id),\n  cantidad    INTEGER NOT NULL CHECK (cantidad > 0),\n  PRIMARY KEY (pedido_id, producto_id)\n);', 'Tienda completa: la N:M Pedido↔Producto vive en lineas_pedido. (Sintaxis PostgreSQL; en MariaDB cambia SERIAL → AUTO_INCREMENT: ver db-mariadb.)'),
+          tip('Lee el esquema como frases', '«Cada LÍNEA pertenece a UN pedido y UN producto; un pedido tiene MUCHAS líneas». Si no puedes narrarlo, el modelo está mal.'),
+        ],
+        expect: 'Transformas un ER pequeño en DDL con PK/FK/UNIQUE/CHECK correctos.',
+      },
+    ],
+  },
+
+  'db-sql': {
+    related: ['db-modelado', 'db-sql-avanzado', 'db-fundamentos'],
+    steps: [
+      {
+        id: 'dbsql-01-select',
+        title: 'SELECT y FROM: leer datos',
+        goal: 'Consultar columnas concretas en vez de SELECT * por costumbre.',
+        importance: 'required',
+        minutes: 10,
+        blocks: [
+          p('SELECT elige COLUMNAS, FROM elige TABLA. SELECT * trae todo: cómodo para explorar, prohibido en código (rompe si cambia el esquema y trae datos de más).'),
+          file('q01.sql', "SELECT nombre, email\nFROM clientes;\n\nSELECT *\nFROM clientes\nLIMIT 5;  -- vistazo rápido, no en producción", 'Columnas explícitas + vistazo limitado.'),
+          tip('Piensa en conjuntos', 'SQL no procesa «fila a fila» como un bucle: describes EL CONJUNTO que quieres y el motor decide cómo obtenerlo. Esta idea te hará falta en GROUP BY y subconsultas.'),
+        ],
+        expect: 'Escribes SELECT de columnas con criterio y limitas exploraciones.',
+      },
+      {
+        id: 'dbsql-02-where',
+        title: 'Filtrar: WHERE, LIKE, IN, BETWEEN, NULL',
+        goal: 'Filtrar filas con operadores y lógica booleana sin trampas de NULL.',
+        importance: 'required',
+        minutes: 16,
+        blocks: [
+          p('WHERE deja pasar solo las filas que cumplen. Operadores: = <> < > <= >=, AND/OR/NOT (AND ata más fuerte: usa paréntesis), LIKE ( % = cualquier cosa, _ = un carácter), IN (lista), BETWEEN (inclusive por ambos lados), IS NULL (nunca = NULL).'),
+          file('q02.sql', "SELECT nombre, email\nFROM clientes\nWHERE (ciudad = 'Bilbao' OR ciudad = 'Vitoria')\n  AND email LIKE '%@ejemplo.com'\n  AND telefono IS NOT NULL;", 'Filtros combinados con paréntesis explícitos.'),
+          viz('sqlquery', 'Activa filtros y orden: mira cómo cambia el resultado'),
+          warn('NULL no es un valor, es «desconocido»', 'NULL = NULL no es verdadero (es NULL). Por eso existe IS NULL / IS NOT NULL. Y COUNT(columna) ignora nulos mientras COUNT(*) los cuenta: fuente clásica de «me faltan filas».'),
+        ],
+        expect: 'Combinas filtros con paréntesis y tratas NULL correctamente.',
+      },
+      {
+        id: 'dbsql-03-orden',
+        title: 'Ordenar, limitar y deduplicar',
+        goal: 'Paginar y ordenar de forma determinista.',
+        importance: 'required',
+        minutes: 10,
+        blocks: [
+          p('ORDER BY columna [ASC|DESC] (varias con coma). LIMIT n (+ OFFSET m para paginar). DISTINCT elimina duplicados del resultado.'),
+          file('q03.sql', 'SELECT DISTINCT ciudad\nFROM clientes\nORDER BY ciudad ASC\nLIMIT 10 OFFSET 20;  -- página 3 de 10', 'Ciudades únicas, ordenadas, paginadas.'),
+          warn('Sin ORDER BY no hay orden garantizado', 'Lo que «suele salir ordenado por id» es casualidad del plan de ejecución. Si el orden importa (paginación, tops), ORDER BY es obligatorio: sin él la página 2 puede repetir filas de la 1.'),
+          deep('LIMIT no es estándar igual en todos', 'PostgreSQL y MariaDB/MySQL aceptan LIMIT n OFFSET m. SQL Server usa TOP/OFFSET-FETCH y Oracle clásico, ROWNUM o FETCH FIRST. Otra razón para no copiar SQL a ciegas entre motores.', ['En paginación profunda OFFSET grande es lento: se buscan keyset pagination (WHERE id > último).']),
+        ],
+        expect: 'Paginas con ORDER BY + LIMIT/OFFSET y explicas por qué el orden es obligatorio.',
+      },
+      {
+        id: 'dbsql-04-escribir',
+        title: 'Escribir: INSERT, UPDATE, DELETE',
+        goal: 'Modificar datos sin borrar la empresa.',
+        importance: 'required',
+        minutes: 14,
+        blocks: [
+          file('q04.sql', "INSERT INTO clientes (nombre, email) VALUES ('Ana', 'ana@ejemplo.com');\n\nUPDATE clientes SET email = 'ana.nueva@ejemplo.com'\nWHERE cliente_id = 7;\n\nDELETE FROM clientes\nWHERE cliente_id = 7;", 'Siempre con WHERE salvo que quieras TODAS las filas.'),
+          warn('UPDATE/DELETE sin WHERE tocan toda la tabla', 'Es el accidente clásico con copia de seguridad como única cura. Hábito profesional: escribe primero SELECT con el mismo WHERE, comprueba las filas, y luego convierte a UPDATE/DELETE. En psql/mariadb, hazlo dentro de transacción (ver db-sql-avanzado).'),
+          info('Lo que devuelven', 'INSERT/UPDATE/DELETE no devuelven filas (salvo RETURNING en PostgreSQL): devuelven conteo afectado. Úsalo para verificar («1 row affected» cuando esperabas 1).'),
+        ],
+        expect: 'Escribes DML con WHERE verificado y compruebas el conteo afectado.',
+      },
+      {
+        id: 'dbsql-05-ddl',
+        title: 'Crear y modificar estructura: DDL',
+        goal: 'Crear BD y tablas con tipos y restricciones correctos.',
+        importance: 'required',
+        minutes: 16,
+        blocks: [
+          file('q05.sql', 'CREATE DATABASE tienda;\n\nCREATE TABLE productos (\n  producto_id SERIAL PRIMARY KEY,          -- PostgreSQL (MariaDB: AUTO_INCREMENT)\n  nombre      VARCHAR(100) NOT NULL,\n  precio      NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (precio >= 0),\n  stock       INTEGER NOT NULL DEFAULT 0,\n  creado      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nALTER TABLE productos ADD COLUMN descripcion TEXT;\nDROP TABLE IF EXISTS productos_obsoletos;', 'DDL completo con tipos sensatos.'),
+          h('Tipos: elige con criterio'),
+          tbl(
+            ['Dato', 'Tipo recomendado', 'Evita'],
+            [
+              ['Texto corto acotado', 'VARCHAR(n)', 'CHAR(n) rellena con espacios'],
+              ['Texto libre', 'TEXT', 'VARCHAR(255) «por si acaso» sin pensar'],
+              ['Enteros', 'INTEGER / BIGINT', 'FLOAT para contadores (impreciso)'],
+              ['Dinero', 'NUMERIC(10,2)', 'FLOAT/REAL: 0.1+0.2 ≠ 0.3 en binario'],
+              ['Sí/no', 'BOOLEAN (PG) / TINYINT(1) (MariaDB)', 'VARCHAR(1) con S/N'],
+              ['Fecha/hora', 'TIMESTAMP (con zona si importa)', 'VARCHAR para fechas'],
+            ],
+          ),
+          warn('DROP TABLE no tiene papelera', 'DROP es irreversible (salvo backup). En producción: revisa dos veces, hazlo en ventana de mantenimiento y ten el backup probado.'),
+        ],
+        expect: 'Creas tablas con tipos y constraints adecuados y modificas esquema con ALTER.',
+      },
+    ],
+  },
+
+  'db-sql-avanzado': {
+    related: ['db-sql', 'db-postgresql', 'db-modelado'],
+    steps: [
+      {
+        id: 'dbadv-01-joins',
+        title: 'JOINs: combinar tablas',
+        goal: 'Elegir el JOIN correcto y predecir sus filas, incluidos los NULL.',
+        importance: 'required',
+        minutes: 18,
+        blocks: [
+          p('JOIN combina filas por condición (casi siempre PK = FK). La diferencia está en QUÉ pasa con las filas sin pareja:'),
+          viz('joins', 'Cambia de JOIN y observa qué filas sobreviven'),
+          tbl(
+            ['JOIN', 'Conserva', 'Filas sin pareja'],
+            [
+              ['INNER', 'Solo parejas', 'Desaparecen de ambos lados'],
+              ['LEFT', 'Toda la izquierda', 'Derecha rellena con NULL'],
+              ['RIGHT', 'Toda la derecha', 'Izquierda rellena con NULL (poco usado: se reescribe como LEFT)'],
+              ['CROSS', 'Todo × todo (producto cartesiano)', 'Sin condición ON: ¡N×M filas!'],
+            ],
+          ),
+          file('q06.sql', 'SELECT c.nombre, p.pedido_id, p.total\nFROM clientes c\nLEFT JOIN pedidos p ON p.cliente_id = c.cliente_id\nORDER BY c.nombre;', 'Clientes CON y SIN pedidos (los sin pedidos salen con NULL). Con INNER desaparecerían.'),
+          warn('CROSS JOIN accidental', 'Olvidar el ON en INNER/LEFT no da error en muchos motores: da un producto cartesiano gigante. Si una consulta devuelve «demasiadas» filas, mira el JOIN primero.'),
+        ],
+        expect: 'Eliges JOIN por enunciado y predices filas y NULLs.',
+      },
+      {
+        id: 'dbadv-02-agregacion',
+        title: 'GROUP BY, HAVING y agregados',
+        goal: 'Resumir por grupos y filtrar grupos (no filas).',
+        importance: 'required',
+        minutes: 15,
+        blocks: [
+          p('COUNT/SUM/AVG/MIN/MAX colapsan filas en un número. GROUP BY parte en grupos y agrega cada uno. HAVING filtra GRUPOS (después de agregar); WHERE filtra FILAS (antes).'),
+          file('q07.sql', 'SELECT cliente_id, COUNT(*) AS pedidos, SUM(total) AS gastado\nFROM pedidos\nWHERE fecha >= CURRENT_DATE - INTERVAL \'90 days\'\nGROUP BY cliente_id\nHAVING COUNT(*) >= 3\nORDER BY gastado DESC;', 'Clientes con 3+ pedidos en 90 días. WHERE recorta filas, HAVING recorta grupos.'),
+          warn('SELECT con columnas sueltas + GROUP BY', 'Toda columna del SELECT debe estar en el GROUP BY o dentro de un agregado. MySQL/MariaDB en modo permisivo devuelven «una cualquiera» (indeterminado); PostgreSQL lo rechaza (mejor: te obliga a pensarlo).'),
+          info('COUNT(*) vs COUNT(col)', 'COUNT(*) cuenta filas (incluye todo). COUNT(col) ignora NULLs de esa columna. Para «¿cuántos tienen email?»: COUNT(email).'),
+        ],
+        expect: 'Agregas por grupos y decides WHERE vs HAVING sin dudar.',
+      },
+      {
+        id: 'dbadv-03-subconsultas',
+        title: 'Subconsultas, EXISTS, CASE y UNION',
+        goal: 'Anidar consultas y ramificar lógica dentro del SQL.',
+        importance: 'required',
+        minutes: 16,
+        blocks: [
+          file('q08.sql', "-- Clientes que SÍ tienen pedidos (EXISTS: para al primer match, suele rendir mejor que IN)\nSELECT nombre FROM clientes c\nWHERE EXISTS (SELECT 1 FROM pedidos p WHERE p.cliente_id = c.cliente_id);\n\n-- Etiquetar por gasto con CASE\nSELECT nombre,\n  CASE WHEN total > 500 THEN 'VIP'\n       WHEN total > 100 THEN 'regular'\n       ELSE 'nuevo' END AS segmento\nFROM clientes;", 'EXISTS correlacionada + CASE.'),
+          file('q09.sql', "-- UNION quita duplicados (más lento); UNION ALL los conserva (más rápido)\nSELECT email FROM clientes\nUNION\nSELECT email FROM proveedores;", 'Mismo nº y tipo de columnas en ambas ramas, o error.'),
+          tip('EXISTS vs IN', 'Con subconsulta que puede devolver NULLs, NOT IN se comporta de forma traicionera (todo se vuelve desconocido); NOT EXISTS es seguro. Ante la duda: EXISTS.'),
+        ],
+        expect: 'Escribes EXISTS, CASE y UNION con sus reglas (columnas compatibles, NULLs).',
+      },
+      {
+        id: 'dbadv-04-cte-views-indices',
+        title: 'CTE, vistas e índices',
+        goal: 'Estructurar consultas complejas y acelerarlas con índices.',
+        importance: 'required',
+        minutes: 16,
+        blocks: [
+          file('q10.sql', "-- CTE: nombra una subconsulta y úsala como tabla (legibilidad + reutilización)\nWITH gasto AS (\n  SELECT cliente_id, SUM(total) AS s FROM pedidos GROUP BY cliente_id\n)\nSELECT c.nombre, g.s\nFROM clientes c JOIN gasto g ON g.cliente_id = c.cliente_id\nWHERE g.s > 1000;\n\nCREATE VIEW vista_resumen AS\nSELECT c.nombre, COUNT(p.pedido_id) AS pedidos\nFROM clientes c LEFT JOIN pedidos p ON p.cliente_id = c.cliente_id\nGROUP BY c.nombre;", 'CTE + vista (la vista es consulta guardada, no copia de datos).'),
+          viz('indexseek', 'Con y sin índice: cuenta las comparaciones'),
+          h('Índices: el resumen honesto'),
+          ul('Un índice B-tree es una estructura ordenada aparte: localizar por clave pasa de escanear N filas a ~log(N) saltos.', 'Indexa lo que filtras/unes/ordenas (WHERE, JOIN, ORDER BY). No indexES todo: cada índice ralentiza escrituras y ocupa espacio.', 'Las PK y UNIQUE ya crean índice solas. Las FK, en cambio, NO siempre: si unes mucho por FK, créalo tú.', 'Verifica con EXPLAIN (ver db-postgresql): Seq Scan donde esperabas Index Scan = índice ausente o inútil.'),
+        ],
+        expect: 'Estructuras con CTE/vistas y decides índices con EXPLAIN en mano.',
+      },
+      {
+        id: 'dbadv-05-transacciones',
+        title: 'Transacciones y ACID',
+        goal: 'Hacer varias escrituras atómicas y entender aislamiento.',
+        importance: 'required',
+        minutes: 16,
+        blocks: [
+          p('Una TRANSACCIÓN agrupa escrituras en «todo o nada»: o se aplican todas (COMMIT) o ninguna (ROLLBACK). Sin esto, una transferencia bancaria podría restar sin sumar.'),
+          viz('txn', 'Resta 200: confirma con COMMIT o deshaz con ROLLBACK'),
+          h('ACID en una línea cada uno'),
+          tbl(
+            ['Letra', 'Garantía', 'Ejemplo'],
+            [
+              ['Atomicidad', 'Todo o nada', 'Transferencia indivisible'],
+              ['Consistencia', 'De restricciones cumplidas a restricciones cumplidas', 'Un CHECK nunca queda violado a mitad'],
+              ['Aislamiento', 'Las concurrentes no se pisan (niveles)', 'Dos compras de la última unidad'],
+              ['Durabilidad', 'Lo confirmado sobrevive a caídas (WAL)', 'COMMIT + apagón = datos a salvo'],
+            ],
+          ),
+          h('Aislamiento y bloqueos (conceptual)'),
+          p('Niveles de menor a mayor aislamiento: Read Committed (defecto PG: no lee sucio), Repeatable Read, Serializable (defecto máximo, puede abortar con «retry»). Más aislamiento = más bloqueos y reintentos. Los bloqueos son el mecanismo (filas/tablas); el deadlock (A espera a B y B a A) lo detecta y aborta el motor: tu código debe reintentar.'),
+        ],
+        expect: 'Envuelves escrituras múltiples en transacciones y explicas ACID y niveles.',
+      },
+    ],
+  },
+}

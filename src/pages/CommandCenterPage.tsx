@@ -115,7 +115,7 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
       <PageHeader
         icon={<Shapes className="h-6 w-6" />}
         title="Linux Command Center"
-        subtitle="Cheatsheet interactiva orientada a Arch, Debian y Ubuntu: busca por intención («¿qué quieres hacer?»), descompón cada comando parte a parte y aprende las diferencias entre distribuciones."
+        subtitle="Cheatsheet interactiva orientada a Arch, Debian, Ubuntu y Alpine: busca por intención («¿qué quieres hacer?»), descompón cada comando parte a parte y aprende las diferencias entre distribuciones."
         actions={<DistributionSelector />}
       />
 
@@ -214,7 +214,7 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
               <p className="font-mono text-xs uppercase tracking-widest text-emerald-400">Recomendado</p>
               <CommandCard entry={results[0]} defaultOpen />
 
-              {results.slice(1).some((c) => c.distro.includes(distroView === 'debian' ? 'debian' : 'arch') || distroView === 'all') && (
+              {results.slice(1).some((c) => distroView === 'all' || c.distro.includes(distroView)) && (
                 <>
                   <p className="pt-2 font-mono text-xs uppercase tracking-widest text-violet-400">Alternativas y relacionados</p>
                   {results.slice(1, 5).map((c) => (
@@ -322,7 +322,7 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
               ))}
             </dl>
             <p className="mt-4 rounded-lg border border-zinc-800 bg-ink-900/70 px-3.5 py-2.5 font-mono text-[11px] leading-relaxed text-zinc-500">
-              Arch Linux utiliza PACMAN (+ AUR con yay/paru) · Ubuntu/Debian utilizan APT (+ dpkg por debajo).
+              Arch Linux utiliza PACMAN (+ AUR con yay/paru) · Ubuntu/Debian utilizan APT (+ dpkg por debajo) · Alpine utiliza APK (+ OpenRC en vez de systemd).
               No se mezclan: cada distribución solo conoce su gestor.
             </p>
           </section>
@@ -332,7 +332,7 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
               {PKG_EQUIVALENCIAS.map((row, i) => (
                 <article key={i} className="overflow-hidden rounded-2xl border border-zinc-800 bg-ink-900/70">
                   <header className="border-b border-zinc-800 bg-zinc-900/50 px-4 py-2.5 font-medium text-zinc-100">{row.task}</header>
-                  <div className="grid divide-y divide-zinc-800 md:grid-cols-2 md:divide-x md:divide-y-0">
+                  <div className={cn('grid divide-y divide-zinc-800 md:divide-x md:divide-y-0', row.alpineLines ? 'md:grid-cols-3' : 'md:grid-cols-2')}>
                     <div className="p-4">
                       <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-widest text-sky-400">Arch</p>
                       <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-zinc-800 bg-black/40 p-3 font-mono text-xs leading-6 text-zinc-200">$ {row.archLines.join('\n$ ')}</pre>
@@ -341,6 +341,12 @@ export default function CommandCenterPage({ focus }: { focus?: string }) {
                       <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-widest text-rose-400">Debian / Ubuntu</p>
                       <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-zinc-800 bg-black/40 p-3 font-mono text-xs leading-6 text-zinc-200">$ {row.debianLines.join('\n$ ')}</pre>
                     </div>
+                    {row.alpineLines && (
+                      <div className="p-4">
+                        <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-widest text-emerald-400">Alpine</p>
+                        <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-zinc-800 bg-black/40 p-3 font-mono text-xs leading-6 text-zinc-200">$ {row.alpineLines.join('\n$ ')}</pre>
+                      </div>
+                    )}
                   </div>
                   <p className="border-t border-zinc-800 px-4 py-3 text-sm leading-relaxed text-zinc-400">{row.explain}</p>
                 </article>

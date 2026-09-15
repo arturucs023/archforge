@@ -2,6 +2,8 @@ import type { CommandEntry } from './meta'
 import { EXTRA_COMMANDS } from './entries-extra'
 import { MORE_COMMANDS } from './entries-more'
 import { ADMIN_COMMANDS } from './entries-admin'
+import { DB_COMMANDS } from './entries-db'
+import { ALPINE_COMMANDS } from './entries-alpine'
 
 /**
  * Catálogo de comandos del Command Center.
@@ -891,4 +893,4 @@ const CORE_COMMANDS: CommandEntry[] = [
   },
 ]
 
-export const COMMANDS: CommandEntry[] = [...CORE_COMMANDS, ...EXTRA_COMMANDS, ...MORE_COMMANDS, ...ADMIN_COMMANDS]
+export const COMMANDS: CommandEntry[] = [...CORE_COMMANDS, ...EXTRA_COMMANDS, ...MORE_COMMANDS, ...ADMIN_COMMANDS, ...DB_COMMANDS, ...ALPINE_COMMANDS]

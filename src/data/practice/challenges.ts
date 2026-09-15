@@ -17,6 +17,12 @@ export const CHALLENGES: Challenge[] = [
   { id: 'ch-ospf', title: 'OSPF por dentro', cat: 'ospf', sectionId: 'net-ospf', questions: ['ospf-01', 'ospf-02', 'ospf-03', 'ospf-04'] },
   { id: 'ch-bgp', title: 'BGP decide', cat: 'bgp', sectionId: 'net-bgp', questions: ['bgp-04', 'bgp-03', 'bgp-01', 'bgp-02'] },
   { id: 'ch-nat', title: 'NAT y PAT', cat: 'nat', sectionId: 'net-nat', questions: ['nat-03', 'nat-01', 'nat-02'] },
+  { id: 'ch-databases', title: 'Fundamentos BD', cat: 'databases', sectionId: 'db-fundamentos', questions: ['db-01', 'db-02', 'db-03', 'db-05', 'db-04'] },
+  { id: 'ch-sql', title: 'SQL esencial', cat: 'sql', sectionId: 'db-sql', questions: ['sql-01', 'sql-02', 'sql-03', 'sql-05', 'sql-04'] },
+  { id: 'ch-modeling', title: 'Modelar y normalizar', cat: 'modeling', sectionId: 'db-modelado', questions: ['mod-04', 'mod-01', 'mod-02', 'mod-03', 'mod-05'] },
+  { id: 'ch-postgres', title: 'PostgreSQL práctico', cat: 'postgresql', sectionId: 'db-postgresql', questions: ['pg-01', 'pg-02', 'pg-03', 'pg-04', 'pg-05'] },
+  { id: 'ch-mariadb', title: 'MariaDB práctico', cat: 'mariadb', sectionId: 'db-mariadb', questions: ['ma-04', 'ma-01', 'ma-02', 'ma-03', 'ma-05'] },
+  { id: 'ch-dbsec', title: 'Blindar la BD', cat: 'dbsec', sectionId: 'db-seguridad', questions: ['dbs-04', 'dbs-05', 'dbs-01', 'dbs-02', 'dbs-03'] },
 ]
 
 export const CHALLENGE_MAP = new Map(CHALLENGES.map((c) => [c.id, c]))

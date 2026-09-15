@@ -5,6 +5,12 @@ import StpSimulator from './StpSimulator'
 import NatTranslator from './NatTranslator'
 import OspfExplorer from './OspfExplorer'
 import BgpPathSelector from './BgpPathSelector'
+import SqlQueryVisualizer from './SqlQueryVisualizer'
+import JoinVisualizer from './JoinVisualizer'
+import NormalizationVisualizer from './NormalizationVisualizer'
+import IndexVisualizer from './IndexVisualizer'
+import TransactionVisualizer from './TransactionVisualizer'
+import ErDiagram from './ErDiagram'
 
 export default function NetvizRenderer({ viz, caption }: { viz: NetvizId; caption?: string }) {
   return (
@@ -19,6 +25,12 @@ export default function NetvizRenderer({ viz, caption }: { viz: NetvizId; captio
         {viz === 'nat' && <NatTranslator />}
         {viz === 'ospf' && <OspfExplorer />}
         {viz === 'bgp' && <BgpPathSelector />}
+        {viz === 'sqlquery' && <SqlQueryVisualizer />}
+        {viz === 'joins' && <JoinVisualizer />}
+        {viz === 'normforms' && <NormalizationVisualizer />}
+        {viz === 'indexseek' && <IndexVisualizer />}
+        {viz === 'txn' && <TransactionVisualizer />}
+        {viz === 'erdiagram' && <ErDiagram />}
       </div>
     </div>
   )
