@@ -11,7 +11,7 @@ import { cn } from '../lib/utils'
 const TOOLS: { id: string; label: string; icon: typeof Hammer; to: string; desc: string }[] = [
   { id: 'builder', label: 'Arch Builder', icon: Hammer, to: '/builder', desc: 'Genera tu ruta personalizada' },
   { id: 'commands', label: 'Command Center', icon: SquareTerminal, to: '/commands', desc: 'Cheatsheet Arch · Debian · Ubuntu' },
-  { id: 'bash-course', label: 'Curso de Bash', icon: SquareTerminal, to: '/bash', desc: '27 módulos + proyectos' },
+  { id: 'bash-course', label: 'Curso de Bash', icon: SquareTerminal, to: '/bash', desc: '29 módulos + proyectos' },
   { id: 'learn', label: 'Aprender Linux', icon: GraduationCap, to: '/learn', desc: 'Fundamentos con ejercicios' },
   { id: 'practice', label: 'Practicar', icon: Target, to: '/practice', desc: 'Retos · examen · mapa · inspector' },
   { id: 'servers', label: 'Servicios y servidores', icon: Server, to: '/servers', desc: '9 cursos: DNS, SSH, Nginx…' },

@@ -212,6 +212,8 @@ function slugify(s: string): string {
     scripts: 'scripts', shebang: 'scripts', 'chmod +x': 'scripts', echo: 'primeros-comandos',
     argumentos: 'argumentos', case: 'condicionales', aritmética: 'comillas-expansion',
     'exit codes': 'exit-codes', stderr: 'operadores-redirecciones', 'arrays/globbing': 'arrays',
+    select: 'menus-select', ps3: 'menus-select', reply: 'menus-select', 'menús': 'menus-select',
+    mapfile: 'mapfile', readarray: 'mapfile',
     getopts: 'bash-avanzado', find: 'grep', 'grep -rn --': 'grep', 'awk begin/end acumuladores': 'awk',
     'free/df/ps': 'procesos-curso', 'printf formato': 'primeros-comandos', 'tar czvf + exclude': 'pipes',
     'mktemp/trap': 'manejo-errores', 'todo el curso': 'bash-avanzado',

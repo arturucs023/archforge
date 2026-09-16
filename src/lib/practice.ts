@@ -159,6 +159,8 @@ export function achievements(
     { id: 'primer-examen', label: 'Primer examen', desc: 'Termina tu primer modo examen.', unlocked: st.examsTaken >= 1 },
     { id: 'examen-90', label: 'Examen 90+', desc: 'Saca 90 o más en un examen.', unlocked: st.bestScore >= 90 },
     { id: 'db-fundamentos', label: 'Mundo relacional', desc: 'Completa Fundamentos de bases de datos.', unlocked: sectionComplete(isDone, 'db-fundamentos') },
+    { id: 'bash-select', label: 'Maestro del menú', desc: 'Completa el reto de bucles y menús select.', unlocked: isChallengeDone(state, 'ch-bash-loops') },
+    { id: 'bash-script', label: 'Scripter', desc: 'Completa el reto de script completo.', unlocked: isChallengeDone(state, 'ch-bash-script') },
     { id: 'sql-reto', label: 'SQL esencial', desc: 'Completa el reto de SQL esencial.', unlocked: isChallengeDone(state, 'ch-sql') },
   ]
   return defs
@@ -228,6 +230,25 @@ export function sampleExam(n = 20): PracticeQuestion[] {
     const q = arr[Math.floor(Math.random() * arr.length)]
     picked.push(q)
     used.add(q.id)
+  }
+  // Refuerzo Bash (área principal del curso): garantiza 3 preguntas de
+  // Bash tomando huecos de las categorías con MÁS banco (mínima pérdida de
+  // cobertura ajena). El total sigue siendo n.
+  const needBash = 3 - picked.filter((q) => q.cat === 'bash').length
+  if (needBash > 0) {
+    const spareBash = BANK.filter((q) => q.cat === 'bash' && !used.has(q.id))
+    const bankSize = new Map<string, number>()
+    for (const q of BANK) bankSize.set(q.cat, (bankSize.get(q.cat) ?? 0) + 1)
+    const victims = picked
+      .filter((q) => q.cat !== 'bash')
+      .sort((a, b) => (bankSize.get(b.cat) ?? 0) - (bankSize.get(a.cat) ?? 0))
+      .slice(0, Math.min(needBash, spareBash.length))
+    for (let i = 0; i < victims.length; i++) {
+      const idx = picked.indexOf(victims[i])
+      used.delete(victims[i].id)
+      picked[idx] = spareBash[i]
+      used.add(spareBash[i].id)
+    }
   }
   // …relleno aleatorio hasta n
   const rest = BANK.filter((q) => !used.has(q.id))

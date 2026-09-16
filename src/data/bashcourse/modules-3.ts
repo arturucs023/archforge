@@ -1,10 +1,11 @@
 import type { BashLesson } from './types'
+import { LESSON_MAPFILE } from './modules-7'
 
 export const MODULES_3: BashLesson[] = [
-  /* =================================== 10 SCRIPTS =================================== */
+  /* =================================== 11 SCRIPTS =================================== */
   {
     id: 'scripts',
-    num: '10',
+      num: '11',
     title: 'Scripts',
     level: 'beginner',
     minutes: 18,
@@ -66,10 +67,10 @@ export const MODULES_3: BashLesson[] = [
     ],
   },
 
-  /* ================================== 11 ARGUMENTOS ================================== */
+  /* ================================== 12 ARGUMENTOS ================================== */
   {
     id: 'argumentos',
-    num: '11',
+      num: '12',
     title: 'Argumentos',
     level: 'intermediate',
     minutes: 15,
@@ -133,10 +134,10 @@ export const MODULES_3: BashLesson[] = [
     ],
   },
 
-  /* ==================================== 12 FUNCIONES ==================================== */
+  /* ==================================== 13 FUNCIONES ==================================== */
   {
     id: 'funciones',
-    num: '12',
+      num: '13',
     title: 'Funciones',
     level: 'intermediate',
     minutes: 18,
@@ -200,10 +201,10 @@ export const MODULES_3: BashLesson[] = [
     ],
   },
 
-  /* ===================================== 13 ARRAYS ===================================== */
+  /* ===================================== 14 ARRAYS ===================================== */
   {
     id: 'arrays',
-    num: '13',
+      num: '14',
     title: 'Arrays',
     level: 'intermediate',
     minutes: 18,
@@ -265,4 +266,5 @@ export const MODULES_3: BashLesson[] = [
       'declare -A para mapas clave→valor; "${!ARR[@]}" da las claves.',
     ],
   },
+  LESSON_MAPFILE,
 ]

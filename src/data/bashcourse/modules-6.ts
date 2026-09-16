@@ -1,10 +1,10 @@
 import type { BashLesson } from './types'
 
 export const MODULES_6: BashLesson[] = [
-  /* ================================= 23 BASH AVANZADO ================================= */
+  /* ================================= 25 BASH AVANZADO ================================= */
   {
     id: 'bash-avanzado',
-    num: '23',
+      num: '25',
     title: 'Bash avanzado',
     level: 'expert',
     minutes: 28,
@@ -68,10 +68,10 @@ export const MODULES_6: BashLesson[] = [
     ],
   },
 
-  /* ==================================== 24 SEGURIDAD ==================================== */
+  /* ==================================== 26 SEGURIDAD ==================================== */
   {
     id: 'seguridad-bash',
-    num: '24',
+      num: '26',
     title: 'Seguridad en Bash',
     level: 'expert',
     minutes: 22,
@@ -135,10 +135,10 @@ export const MODULES_6: BashLesson[] = [
     ],
   },
 
-  /* ============================ 25 SHELLCHECK Y BUENAS PRÁCTICAS ============================ */
+  /* ============================ 27 SHELLCHECK Y BUENAS PRÁCTICAS ============================ */
   {
     id: 'shellcheck',
-    num: '25',
+      num: '27',
     title: 'ShellCheck y buenas prácticas',
     level: 'intermediate',
     minutes: 15,
@@ -204,10 +204,10 @@ export const MODULES_6: BashLesson[] = [
   },
 
 
-  /* ================================= 26 AUTOMATIZACIÓN ================================= */
+  /* ================================= 28 AUTOMATIZACIÓN ================================= */
   {
     id: 'automatizacion',
-    num: '26',
+      num: '28',
     title: 'Automatización',
     level: 'expert',
     minutes: 25,
@@ -276,10 +276,10 @@ export const MODULES_6: BashLesson[] = [
       'Idempotencia: diseñar para que repetir no rompa.',
     ],
   },
-  /* ================================ 27 PROYECTOS FINALES ================================ */
+  /* ================================ 29 PROYECTOS FINALES ================================ */
   {
     id: 'proyectos-finales',
-    num: '27',
+      num: '29',
     title: 'Proyectos finales',
     level: 'expert',
     minutes: 10,

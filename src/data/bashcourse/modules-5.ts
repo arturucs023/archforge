@@ -1,10 +1,10 @@
 import type { BashLesson } from './types'
 
 export const MODULES_5: BashLesson[] = [
-  /* ======================= 18 PIPES Y COMPOSICIÓN DE COMANDOS ======================= */
+  /* ======================= 20 PIPES Y COMPOSICIÓN DE COMANDOS ======================= */
   {
     id: 'pipes',
-    num: '18',
+      num: '20',
     title: 'Pipes y composición',
     level: 'intermediate',
     minutes: 20,
@@ -74,10 +74,10 @@ export const MODULES_5: BashLesson[] = [
     ],
   },
 
-  /* ==================================== 19 PROCESOS ==================================== */
+  /* ==================================== 21 PROCESOS ==================================== */
   {
     id: 'procesos-curso',
-    num: '19',
+      num: '21',
     title: 'Procesos',
     level: 'intermediate',
     minutes: 18,
@@ -140,10 +140,10 @@ export const MODULES_5: BashLesson[] = [
     ],
   },
 
-  /* ============================ 20 VARIABLES DE ENTORNO ============================ */
+  /* ============================ 22 VARIABLES DE ENTORNO ============================ */
   {
     id: 'variables-entorno',
-    num: '20',
+      num: '22',
     title: 'Variables de entorno',
     level: 'beginner',
     minutes: 14,
@@ -199,10 +199,10 @@ export const MODULES_5: BashLesson[] = [
     ],
   },
 
-  /* ============================== 21 MANEJO DE ERRORES ============================== */
+  /* ============================== 23 MANEJO DE ERRORES ============================== */
   {
     id: 'manejo-errores',
-    num: '21',
+      num: '23',
     title: 'Manejo de errores',
     level: 'expert',
     minutes: 22,
@@ -266,10 +266,10 @@ export const MODULES_5: BashLesson[] = [
     ],
   },
 
-  /* ============================ 22 EXPRESIONES REGULARES ============================ */
+  /* ============================ 24 EXPRESIONES REGULARES ============================ */
   {
     id: 'regex',
-    num: '22',
+      num: '24',
     title: 'Expresiones regulares',
     level: 'expert',
     minutes: 25,

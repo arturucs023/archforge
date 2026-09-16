@@ -1,4 +1,5 @@
 import type { BashLesson } from './types'
+import { LESSON_MENUS_SELECT } from './modules-7'
 
 export const MODULES_2: BashLesson[] = [
   /* ================================== 06 EXIT CODES ================================== */
@@ -290,4 +291,5 @@ export const MODULES_2: BashLesson[] = [
       'break corta; continue salta; jamás parses ls con for.',
     ],
   },
+  LESSON_MENUS_SELECT,
 ]

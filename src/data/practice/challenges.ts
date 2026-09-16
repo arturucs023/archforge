@@ -6,6 +6,12 @@ import type { Challenge } from './types'
 export const CHALLENGES: Challenge[] = [
   { id: 'ch-linux', title: 'Fundamentos Linux', cat: 'linux', sectionId: 'terminal', questions: ['lx-01', 'lx-02', 'lx-03', 'lx-04'] },
   { id: 'ch-bash', title: 'Pipes y shell', cat: 'bash', sectionId: 'bash', questions: ['sh-01', 'sh-02', 'sh-04', 'sh-03'] },
+  { id: 'ch-bash-vars', title: 'Variables y expansión', cat: 'bash', sectionId: 'bash', questions: ['bsh-05', 'bsh-06', 'bsh-07', 'bsh-08', 'bsh-09'] },
+  { id: 'ch-bash-cond', title: 'Decide con Bash', cat: 'bash', sectionId: 'bash', questions: ['bsh-10', 'bsh-11', 'bsh-12', 'bsh-13'] },
+  { id: 'ch-bash-loops', title: 'Bucles y menús select', cat: 'bash', sectionId: 'bash', questions: ['bsh-14', 'bsh-15', 'bsh-16', 'bsh-17', 'bsh-18', 'bsh-39', 'bsh-19'] },
+  { id: 'ch-bash-func', title: 'Funciones que sí devuelven', cat: 'bash', sectionId: 'bash', questions: ['bsh-20', 'bsh-21', 'bsh-22', 'bsh-23'] },
+  { id: 'ch-bash-pipes', title: 'Pipes y redirecciones', cat: 'bash', sectionId: 'bash', questions: ['bsh-24', 'bsh-25', 'bsh-26', 'bsh-28', 'bsh-29'] },
+  { id: 'ch-bash-script', title: 'Script completo', cat: 'bash', sectionId: 'bash', questions: ['bsh-01', 'bsh-35', 'bsh-36', 'bsh-30', 'bsh-32'] },
   { id: 'ch-redes', title: 'Cómo se mueve un paquete', cat: 'redes', sectionId: 'net-fundamentos', questions: ['net-02', 'net-03', 'net-01', 'net-04'] },
   { id: 'ch-ipv4', title: 'Leer direcciones IPv4', cat: 'ipv4', sectionId: 'net-ipv4', questions: ['ip4-01', 'ip4-02', 'ip4-03', 'ip4-04'] },
   { id: 'ch-subnet', title: 'Subnetting esencial', cat: 'subnetting', sectionId: 'net-ipv4', questions: ['sub-01', 'sub-02', 'sub-05', 'sub-03', 'sub-04'] },

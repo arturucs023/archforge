@@ -1,10 +1,10 @@
 import type { BashLesson } from './types'
 
 export const MODULES_4: BashLesson[] = [
-  /* ============================ 14 PROCESAMIENTO DE TEXTO ============================ */
+  /* ============================ 16 PROCESAMIENTO DE TEXTO ============================ */
   {
     id: 'procesamiento-texto',
-    num: '14',
+      num: '16',
     title: 'Procesamiento de texto',
     level: 'intermediate',
     minutes: 20,
@@ -61,10 +61,10 @@ export const MODULES_4: BashLesson[] = [
     ],
   },
 
-  /* ====================================== 15 GREP ====================================== */
+  /* ====================================== 17 GREP ====================================== */
   {
     id: 'grep',
-    num: '15',
+      num: '17',
     title: 'grep a fondo',
     level: 'intermediate',
     minutes: 25,
@@ -155,10 +155,10 @@ export const MODULES_4: BashLesson[] = [
     ],
   },
 
-  /* ======================================= 16 SED ======================================= */
+  /* ======================================= 18 SED ======================================= */
   {
     id: 'sed',
-    num: '16',
+      num: '18',
     title: 'sed a fondo',
     level: 'intermediate',
     minutes: 28,
@@ -245,10 +245,10 @@ export const MODULES_4: BashLesson[] = [
     ],
   },
 
-  /* ======================================= 17 AWK ======================================= */
+  /* ======================================= 19 AWK ======================================= */
   {
     id: 'awk',
-    num: '17',
+      num: '19',
     title: 'awk a fondo',
     level: 'expert',
     minutes: 30,

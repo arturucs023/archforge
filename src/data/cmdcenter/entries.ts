@@ -4,6 +4,8 @@ import { MORE_COMMANDS } from './entries-more'
 import { ADMIN_COMMANDS } from './entries-admin'
 import { DB_COMMANDS } from './entries-db'
 import { ALPINE_COMMANDS } from './entries-alpine'
+import { EDITOR_COMMANDS } from './entries-editors'
+import { BASH_COMMANDS } from './entries-bash'
 
 /**
  * Catálogo de comandos del Command Center.
@@ -893,4 +895,4 @@ const CORE_COMMANDS: CommandEntry[] = [
   },
 ]
 
-export const COMMANDS: CommandEntry[] = [...CORE_COMMANDS, ...EXTRA_COMMANDS, ...MORE_COMMANDS, ...ADMIN_COMMANDS, ...DB_COMMANDS, ...ALPINE_COMMANDS]
+export const COMMANDS: CommandEntry[] = [...CORE_COMMANDS, ...EXTRA_COMMANDS, ...MORE_COMMANDS, ...ADMIN_COMMANDS, ...DB_COMMANDS, ...ALPINE_COMMANDS, ...EDITOR_COMMANDS, ...BASH_COMMANDS]

@@ -1,5 +1,6 @@
 import type { PracticeQuestion } from './types'
 import { BANK_DB } from './bank-db'
+import { BANK_BASH } from './bank-bash'
 
 /* Banco de preguntas v1.2 + v1.3. Todas verificadas contra las unidades de ArchForge.
    kinds: choice (máx 4 opciones) · numeric · text · subnet. */
@@ -651,6 +652,6 @@ const BANK_CORE: PracticeQuestion[] = [
   },
 ]
 
-export const BANK: PracticeQuestion[] = [...BANK_CORE, ...BANK_DB]
+export const BANK: PracticeQuestion[] = [...BANK_CORE, ...BANK_DB, ...BANK_BASH]
 
 export const QUESTION_MAP = new Map(BANK.map((q) => [q.id, q]))
