@@ -44,11 +44,17 @@ export default function Topbar({ onMenu, showOnDesktop = false }: { onMenu: () =
   const hideHeader = appearance.headerStyle === 'floating' && hideOnScroll
   const showSearch = appearance.searchMode === 'always' ||
     (appearance.searchMode === 'onscroll' && !hideOnScroll)
+  /* Espejo con sidebar a la derecha: el menú pasa a la derecha y el grupo
+     de la derecha (reloj, modos, ajustes) a la izquierda. Se aplica por
+     clase (flex-row-reverse) ADEMÁS de la regla CSS, por robustez. */
+  const mirrored = appearance.sidebarSide === 'right'
 
   return (
     <header
+      data-mirrored={mirrored || undefined}
       className={cn(
         'af-topbar sticky top-0 z-20 flex h-14 items-center gap-2 px-3 sm:px-5',
+        mirrored && 'flex-row-reverse',
         appearance.headerStyle === 'integrated'
           ? 'border-b border-transparent'
           : 'border-b border-zinc-800/80 bg-ink-950/85 backdrop-blur-md',
