@@ -27,6 +27,7 @@ Publicado automaticamente con GitHub Actions en cada `push` a `main` (ver [Despl
 - **Curso de Bash** -- 6 modulos progresivos con proyectos praticos
 - **Terminal simulada (sandbox)** -- Linux aislado en el navegador para practicar sin riesgo
 - **Laboratorio VM real** -- Terminal xterm.js conectada via SSH a una VM Alpine Linux via QEMU
+- **Laboratorio VM en el navegador** -- Alpine Linux real emulado con v86 (WebAssembly), sin servidor: funciona tambien en GitHub Pages
 - **Aprendizaje por niveles** -- Explicaciones adaptadas a principiante, intermedio o experto
 - **Dashboard y progreso** -- Ruta visual, pasos completados, tiempo estimado y racha de aprendizaje
 - **Buscador global** -- Encuentra comandos, paquetes, tutoriales y conceptos
@@ -179,7 +180,8 @@ vm/
 | `npm start` | Build + lanza backend VM + frontend en produccion |
 | `npm run vm` | Lanza solo el servidor VM (requiere QEMU) |
 | `npm run dev:vm` | Desarrollo con servidor VM en paralelo |
-| `npm run serve:pages` | Compila y sirve `dist/` en un subdirectorio, simulando GitHub Pages |
+| `npm run serve:pages` | Compila y sirve `dist/` en un subdirectorio, simulando GitHub Pages (soporta Range) |
+| `npm run setup:vm-web` | Descarga la ISO de Alpine, los BIOS y el `.wasm` de v86 a `public/vm/` |
 
 ---
 
@@ -199,14 +201,34 @@ subdirectorio `/archforge/`.
 
 ### Lo que NO funciona en el sitio publicado
 
-El **laboratorio VM real** necesita un backend Node + QEMU corriendo en
-`127.0.0.1`, cosa que no existe en un despliegue estatico. La pagina
-`#/vm` detecta que no esta en localhost y explica como levantarlo en local,
-en vez de mostrar un terminal vacio.
+El **laboratorio VM** tiene dos modos, según dónde se abra ArchForge:
 
-Todo lo demas (guias, Arch Builder, comparadores, troubleshooting, curso de
-Bash, CLI educativa, servidores, busqueda y progreso) funciona por completo
-en el navegador.
+| | Local (`localhost`) | Web (GitHub Pages) |
+|---|---|---|
+| Emulador | QEMU + SSH en `server/vm-server.mjs` | v86 (WebAssembly) en el navegador |
+| Imagen | `vm/base.qcow2` (release v1.0.0) | ISO de Alpine 3.24 (i386) |
+| Persistencia | Sí — capa overlay | No — efímero, se reinicia al recargar |
+| Requisito | Node + QEMU + imagen | Solo el navegador |
+
+En la web la VM **sí funciona**: el emulador v86 corre un x86 completo en
+WebAssembly y arranca Alpine de verdad. Los comandos son reales; lo que no
+hay es servidor Node detrás ni persistencia entre recargas.
+
+Detalle técnico: la ISO debe ser de **32 bits (x86)**. v86 no emula las
+extensiones de 64 bits, así que una imagen `x86_64` se detiene con
+`This kernel requires an x86-64 CPU, but only detected an i686 CPU`.
+
+Los recursos del laboratorio en web (~51 MB) no están en el repo: los baja el
+build con `npm run setup:vm-web`, que descarga la ISO, los BIOS y copia el
+`.wasm` del emulador a `public/vm/`.
+
+### Probar el laboratorio VM sin publicarlo
+
+```bash
+npm run setup:vm-web   # descarga ISO + BIOS + wasm en public/vm/
+npm run serve:pages    # simula GitHub Pages en http://127.0.0.1:8080/archforge/
+node tools/test-vm-boot.mjs   # arranca Alpine en Node y comprueba el login
+```
 
 ### Probar la build como Pages
 

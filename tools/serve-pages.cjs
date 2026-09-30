@@ -45,7 +45,37 @@ http
       file = path.join(DIST, 'index.html')
     }
 
-    res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' })
+    const type = TYPES[path.extname(file)] || 'application/octet-stream'
+    const size = fs.statSync(file).size
+
+    /* Peticiones por rango (Range). El emulador v86 descarga la ISO de Alpine
+       por trozos y GitHub Pages responde 206; sin esto el laboratorio no
+       arranca en local aunque funcione en produccion. */
+    const range = req.headers.range
+    if (range) {
+      const m = /bytes=(\d*)-(\d*)/.exec(range)
+      if (m) {
+        const start = m[1] ? parseInt(m[1], 10) : 0
+        const end = m[2] ? parseInt(m[2], 10) : size - 1
+        if (start >= size || start > end) {
+          res.writeHead(416, { 'Content-Range': `bytes */${size}` })
+          return res.end()
+        }
+        res.writeHead(206, {
+          'Content-Type': type,
+          'Content-Range': `bytes ${start}-${end}/${size}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': end - start + 1,
+        })
+        return fs.createReadStream(file, { start, end }).pipe(res)
+      }
+    }
+
+    res.writeHead(200, {
+      'Content-Type': type,
+      'Content-Length': size,
+      'Accept-Ranges': 'bytes',
+    })
     fs.createReadStream(file).pipe(res)
   })
   .listen(PORT, () => console.log(`Sirviendo dist/ en http://127.0.0.1:${PORT}${MOUNT}/`))

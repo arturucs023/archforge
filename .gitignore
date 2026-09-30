@@ -13,3 +13,7 @@ vm/runtime/
 # Environment
 .env
 .env.*
+
+# Recursos del laboratorio VM en el navegador (v86 + ISO de Alpine).
+# Son ~68 MB y los baja el build: node tools/setup-vm-web.mjs
+public/vm/
