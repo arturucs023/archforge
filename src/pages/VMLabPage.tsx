@@ -9,9 +9,17 @@ import Breadcrumbs, { PageHeader } from '../components/Breadcrumbs'
 import CliVsRealNotice from '../components/CliVsRealNotice'
 import { cn } from '../lib/utils'
 
-type VmState = 'unknown' | 'stopped' | 'starting' | 'running' | 'resetting' | 'unavailable'
+type VmState = 'unknown' | 'stopped' | 'starting' | 'running' | 'resetting' | 'unavailable' | 'cloud'
 
 const WS_URL = 'ws://127.0.0.1:7860/vm-terminal'
+
+/* El laboratorio VM necesita el backend Node + QEMU corriendo en 127.0.0.1.
+   Cuando ArchForge se sirve desde GitHub Pages (o cualquier host estatico)
+   ese backend no existe, asi que lo detectamos para explicar la situacion
+   en vez de dejar un terminal vacio que parece roto. */
+const IS_LOCAL =
+  typeof window !== 'undefined' &&
+  ['localhost', '127.0.0.1', '::1', '[::1]'].includes(window.location.hostname)
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -55,6 +63,11 @@ export default function VMLabPage() {
 
   /* ---------- estado del backend (poll ligero) + auto-conexión ---------- */
   useEffect(() => {
+    // En un despliegue estatico no hay backend: no tiene sentido sondearlo
+    if (!IS_LOCAL) {
+      setState('cloud'); stateRef.current = 'cloud'
+      return
+    }
     let alive = true
     let wasConnected = false
     const poll = async () => {
@@ -86,6 +99,8 @@ export default function VMLabPage() {
 
   /* ---------- inicializar xterm.js ---------- */
   useEffect(() => {
+    // Sin backend local no hay terminal que inicializar ni CDN que descargar
+    if (!IS_LOCAL) return
     let cancelled = false
 
     ;(async () => {
@@ -278,6 +293,7 @@ export default function VMLabPage() {
   const connected = state === 'running'
   const busy = state === 'starting' || state === 'resetting'
   const unavailable = state === 'unavailable'
+  const cloud = state === 'cloud'
 
   const STATE_UI: Record<VmState, { dot: string; text: string }> = {
     unknown:     { dot: 'bg-zinc-500',    text: 'Comprobando...' },
@@ -286,6 +302,7 @@ export default function VMLabPage() {
     running:     { dot: 'bg-emerald-500', text: 'Linux conectado' },
     resetting:   { dot: 'bg-amber-400',   text: 'Restableciendo laboratorio...' },
     unavailable: { dot: 'bg-zinc-600',    text: 'QEMU no instalado' },
+    cloud:       { dot: 'bg-sky-500',     text: 'Requiere ejecucion local' },
   }
 
   return (
@@ -319,11 +336,11 @@ export default function VMLabPage() {
       <div className="mb-3 flex flex-wrap gap-2">
         <button
           onClick={() => vmAction('open')}
-          disabled={connected || busy || unavailable}
+          disabled={connected || busy || unavailable || cloud}
           aria-label="Abrir terminal de la maquina virtual"
           className={cn(
             'inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors',
-            connected || busy || unavailable ? 'border-zinc-800 text-zinc-600' : 'border-sky-500/40 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20',
+            connected || busy || unavailable || cloud ? 'border-zinc-800 text-zinc-600' : 'border-sky-500/40 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20',
           )}
         >
           Abrir terminal
@@ -333,11 +350,11 @@ export default function VMLabPage() {
           onClick={() => {
             if (window.confirm('Restablecer el laboratorio?\n\nSe eliminaran todos los archivos, paquetes y configuraciones realizados durante la practica.')) vmAction('reset')
           }}
-          disabled={busy || unavailable}
+          disabled={busy || unavailable || cloud}
           aria-label="Restablecer laboratorio: borra todos los cambios"
           className={cn(
             'inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors',
-            busy || unavailable ? 'border-zinc-800 text-zinc-600' : 'border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20',
+            busy || unavailable || cloud ? 'border-zinc-800 text-zinc-600' : 'border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20',
           )}
         >
           Restablecer laboratorio
@@ -345,16 +362,39 @@ export default function VMLabPage() {
 
         <button
           onClick={() => vmAction('stop')}
-          disabled={state === 'stopped' || unavailable}
+          disabled={state === 'stopped' || unavailable || cloud}
           aria-label="Detener la maquina virtual"
           className={cn(
             'inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors',
-            state === 'stopped' || unavailable ? 'border-zinc-800 text-zinc-600' : 'border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20',
+            state === 'stopped' || unavailable || cloud ? 'border-zinc-800 text-zinc-600' : 'border-rose-500/40 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20',
           )}
         >
           Detener laboratorio
         </button>
       </div>
+
+      {/* Aviso: despliegue estatico sin backend local */}
+      {cloud && (
+        <div className="mb-4 rounded-xl border border-sky-500/30 bg-sky-500/[0.07] p-4">
+          <p className="text-sm font-semibold text-sky-200">El laboratorio VM necesita ejecutarse en tu equipo</p>
+          <p className="mt-1 text-xs text-zinc-400">
+            Esta version esta publicada como sitio estatico, asi que no hay servidor Node ni QEMU detras.
+            La maquina virtual real solo funciona en tu localhost. Para usarla:
+          </p>
+          <div className="mt-2 rounded-lg bg-[#0b0e14] p-3 font-mono text-xs text-zinc-300">
+            <p className="text-zinc-500"># clona el repositorio y arranca el backend</p>
+            <p className="text-emerald-300">git clone https://github.com/arturucs023/archforge.git</p>
+            <p className="text-emerald-300">cd archforge &amp;&amp; npm install</p>
+            <p className="text-emerald-300">npm start</p>
+            <p className="mt-2 text-zinc-500"># y abre http://localhost:4173/vm</p>
+          </div>
+          <p className="mt-2 text-xs text-zinc-500">
+            Mientras tanto, puedes practicar con la{' '}
+            <a href="#/terminal" className="text-sky-300 underline decoration-dotted">CLI educativa (sandbox)</a>, que
+            funciona por completo en el navegador sin instalar nada.
+          </p>
+        </div>
+      )}
 
       {/* Aviso QEMU no disponible */}
       {unavailable && (
@@ -400,6 +440,14 @@ export default function VMLabPage() {
             <p className="mt-1 font-mono text-xs text-zinc-600">Instala QEMU para poder usar esta funcion.</p>
             <p className="mt-3 text-xs text-zinc-500">
               Mientras tanto, puedes usar la <a href="#/terminal" className="text-sky-300 underline decoration-dotted">CLI educativa (sandbox)</a>.
+            </p>
+          </div>
+        ) : cloud ? (
+          <div className="bg-[#0b0e14] px-4 py-12 text-center">
+            <p className="font-mono text-sm text-zinc-400">Terminal de la VM no disponible en este despliegue.</p>
+            <p className="mt-1 font-mono text-xs text-zinc-600">Arranca el backend con <span className="text-emerald-300">npm start</span> en tu localhost.</p>
+            <p className="mt-3 text-xs text-zinc-500">
+              Ahora mismo puedes practicar con la <a href="#/terminal" className="text-sky-300 underline decoration-dotted">CLI educativa (sandbox)</a>.
             </p>
           </div>
         ) : (

@@ -10,7 +10,8 @@
     "build": "tsc && vite build",
     "start": "npm run build && node script/start.mjs",
     "vm": "node server/vm-server.mjs",
-    "serve": "vite preview --host 127.0.0.1 --port 4173 --strictPort --open"
+    "serve": "vite preview --host 127.0.0.1 --port 4173 --strictPort --open",
+    "serve:pages": "npm run build && node tools/serve-pages.cjs"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.11.0",

@@ -11,7 +11,9 @@
 
 ## Demo
 
-> Demo publica proximamente.
+**[https://arturucs023.github.io/archforge/](https://arturucs023.github.io/archforge/)**
+
+Publicado automaticamente con GitHub Actions en cada `push` a `main` (ver [Despliegue](#despliegue)).
 
 ---
 
@@ -177,6 +179,43 @@ vm/
 | `npm start` | Build + lanza backend VM + frontend en produccion |
 | `npm run vm` | Lanza solo el servidor VM (requiere QEMU) |
 | `npm run dev:vm` | Desarrollo con servidor VM en paralelo |
+| `npm run serve:pages` | Compila y sirve `dist/` en un subdirectorio, simulando GitHub Pages |
+
+---
+
+## Despliegue
+
+El sitio se publica en GitHub Pages mediante `.github/workflows/deploy.yml`.
+
+1. En el repo, ve a **Settings → Pages → Build and deployment**
+2. En **Source**, selecciona **GitHub Actions**
+3. Haz `push` a `main`: el workflow compila y publica automaticamente
+
+La app usa **enrutado por hash** (`#/ruta`), asi que no necesita reglas de
+reescritura en el servidor: cada ruta resuelve siempre al `index.html`.
+Los assets se emiten con ruta relativa (`base: './'` en `vite.config.ts`), lo
+que permite servir la build tanto en la raiz de un dominio como en el
+subdirectorio `/archforge/`.
+
+### Lo que NO funciona en el sitio publicado
+
+El **laboratorio VM real** necesita un backend Node + QEMU corriendo en
+`127.0.0.1`, cosa que no existe en un despliegue estatico. La pagina
+`#/vm` detecta que no esta en localhost y explica como levantarlo en local,
+en vez de mostrar un terminal vacio.
+
+Todo lo demas (guias, Arch Builder, comparadores, troubleshooting, curso de
+Bash, CLI educativa, servidores, busqueda y progreso) funciona por completo
+en el navegador.
+
+### Probar la build como Pages
+
+```bash
+npm run serve:pages
+```
+
+Levanta `dist/` en `http://127.0.0.1:8080/archforge/`, reproduciendo el
+subdirectorio y las rutas relativas del despliegue real.
 
 ---
 
