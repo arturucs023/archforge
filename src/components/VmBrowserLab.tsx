@@ -89,18 +89,22 @@ async function fetchIsoInfo(): Promise<{ bytes: number; alpine: string }> {
   return { bytes: j.isoBytes, alpine: j.alpine ?? '3.24' }
 }
 
-/* El kernel de Alpine NO carga solo el driver de la NIC: sin esto la VM se
-   queda sin emitir ni un paquete (medido con tools/test-vm-net.mjs). El
-   Dockerfile de referencia de v86 para Alpine hace lo mismo a mano, asi que no
-   es un fallo nuestro sino de la ISO live.
+/* Configuracion de red dentro de Alpine.
 
-   Ademas, el prompt de login vive en ttyS0, asi que la entrada va por el puerto
-   serie (serial0_send), no por el teclado PS/2: son canales distintos. */
-const NET_SETUP = [
-  'modprobe virtio_net',
-  'ip link set eth0 up',
-  'udhcpc -i eth0 -q -t 8 -T 2',
-]
+   Lo que se sabe de verdad (medido con tools/test-vm-net2.mjs):
+   - virtio_net va COMPILADO en el kernel virt, no es un modulo. La interfaz
+     eth0 ya aparece sin tocar nada, asi que modprobe sobra y falla con
+     "module not found".
+   - El DHCP del relay necesita margen: con pocos intentos se queda sin IP y
+     el unico sintoma es "ping: Network unreachable" (no hay ruta).
+   - ping usa ICMP, que los relays no reenvian: para comprobar salida real
+     hay que mirar el lease de DHCP y probar con wget (TCP).
+
+   Los intervalos van holgados porque la VM emulada va lenta y el relay puede
+   estar ocupado. */
+const NET_UP = 'ip link set eth0 up'
+const NET_DHCP = 'udhcpc -i eth0 -q -t 25 -T 5 -A 3'
+const NET_REPORT = 'ip -o addr show eth0 | tr -s " "; ip route'
 
 export default function VmBrowserLab({ compact = false }: { compact?: boolean }) {
   const [phase, setPhase] = useState<Phase>('idle')
@@ -224,10 +228,10 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
         entered = true
         emulator.serial0_send('root\r')
         if (!netEnabled) return
-        // Uno por vez y espaciados: la consola va emulada y no traga pegados
-        NET_SETUP.forEach((cmd, i) => {
-          setTimeout(() => emulator.serial0_send(cmd + '\r'), 8000 + i * 6000)
-        })
+        // A la consola emulada hay que darle margen: si se le pregunta por la
+        // IP demasiado pronto, udhcpc se queda corto y no hay ruta.
+        setTimeout(() => emulator.serial0_send(NET_UP + '\r'), 6000)
+        setTimeout(() => emulator.serial0_send(NET_DHCP + '\r'), 12000)
       }, 500)
 
       cleanupRef.current = () => {
@@ -334,9 +338,12 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
 
       {netEnabled && running && (
         <p className="text-xs text-zinc-500">
-          Red activa. En Alpine: <span className="font-mono text-zinc-400">ip addr</span> para ver la interfaz,{' '}
-          <span className="font-mono text-zinc-400">ping -c3 dl-cdn.alpinelinux.org</span> para comprobar salida, y{' '}
-          <span className="font-mono text-zinc-400">apk update</span> para instalar paquetes.
+          Red activa. Comprueba la conexión con{' '}
+          <span className="font-mono text-zinc-400">apk update</span> o{' '}
+          <span className="font-mono text-zinc-400">wget -qO- http://dl-cdn.alpinelinux.org/ &gt; /dev/null</span>.
+          No uses <span className="font-mono text-zinc-400">ping</span>: va por ICMP, que el relay no reenvía, y
+          dará error aunque la red funcione. Para ver tu IP:{' '}
+          <span className="font-mono text-zinc-400">ip addr show eth0</span>.
         </p>
       )}
 
