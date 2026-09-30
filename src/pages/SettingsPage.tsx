@@ -471,7 +471,7 @@ export default function SettingsPage() {
         </h3>
         <div className="flex flex-wrap gap-3">
           <CheckOpt checked={appearance.glass} onChange={(v) => updateAppearance({ glass: v })}>
-            🪟 Cristal en sidebar y modales
+            🪟 Cristal en modales
           </CheckOpt>
           <CheckOpt checked={appearance.noise} onChange={(v) => updateAppearance({ noise: v })}>
             🌾 Grano de fondo sutil
@@ -495,6 +495,23 @@ export default function SettingsPage() {
             />
           </div>
         )}
+        <div className="mt-3 max-w-xs">
+          <div className="flex items-center justify-between text-xs text-zinc-500">
+            <label htmlFor="sidebar-alpha">Fondo del sidebar</label>
+            <span className="font-mono tabular-nums text-sky-300">{appearance.sidebarAlpha}%</span>
+          </div>
+          <input
+            id="sidebar-alpha"
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={appearance.sidebarAlpha}
+            onChange={(e) => updateAppearance({ sidebarAlpha: Number(e.target.value) })}
+            className="mt-1 w-full accent-sky-500"
+          />
+          <p className="mt-0.5 font-mono text-[10px] text-zinc-600">100% sólido · 0% transparente</p>
+        </div>
 
         {/* 3. Densidad */}
         <h3 className="mt-6 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">

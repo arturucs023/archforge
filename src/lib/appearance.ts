@@ -21,8 +21,10 @@ export interface AppearanceConfig {
   font: UiFont
   weight: FontWeight
   glass: boolean
-  /** opacidad del fondo con cristal, en % (80..95) */
+  /** opacidad del fondo con cristal (modales), en % (80..95) */
   glassAlpha: number
+  /** opacidad del fondo del sidebar, en % (0 = transparente, 100 = sólido) */
+  sidebarAlpha: number
   noise: boolean
   /** saturación del acento en % (0 = gris, 100 = oficial, 150 = vibrante) */
   saturation: number
@@ -40,6 +42,7 @@ export const DEFAULT_APPEARANCE: AppearanceConfig = {
   weight: 'normal',
   glass: false,
   glassAlpha: 88,
+  sidebarAlpha: 100,
   noise: false,
   saturation: 100,
   bgCustom: null,
@@ -68,6 +71,7 @@ export function loadAppearance(): AppearanceConfig {
         weight: WEIGHTS.includes(p.weight as FontWeight) ? (p.weight as FontWeight) : DEFAULT_APPEARANCE.weight,
         glass: typeof p.glass === 'boolean' ? p.glass : DEFAULT_APPEARANCE.glass,
         glassAlpha: typeof p.glassAlpha === 'number' ? clamp(Math.round(p.glassAlpha), 80, 95) : DEFAULT_APPEARANCE.glassAlpha,
+        sidebarAlpha: typeof p.sidebarAlpha === 'number' ? clamp(Math.round(p.sidebarAlpha), 0, 100) : DEFAULT_APPEARANCE.sidebarAlpha,
         noise: typeof p.noise === 'boolean' ? p.noise : DEFAULT_APPEARANCE.noise,
         saturation: typeof p.saturation === 'number' ? clamp(Math.round(p.saturation), 0, 150) : DEFAULT_APPEARANCE.saturation,
         bgCustom: typeof p.bgCustom === 'string' && /^#[0-9a-fA-F]{6}$/.test(p.bgCustom) ? p.bgCustom : null,
@@ -189,6 +193,7 @@ export function applyAppearance(cfg: AppearanceConfig): void {
   root.dataset.afGlass = cfg.glass ? 'on' : 'off'
   root.dataset.afNoise = cfg.noise ? 'on' : 'off'
   root.style.setProperty('--af-glass-alpha', (cfg.glassAlpha / 100).toFixed(2))
+  root.style.setProperty('--af-sidebar-alpha', (cfg.sidebarAlpha / 100).toFixed(2))
 
   ensureWebFont(cfg.font)
   applyAccentSaturation()

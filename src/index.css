@@ -357,18 +357,20 @@ html[data-af-panel='card'] main section[class*='rounded'] {
     0 3px 10px -3px rgb(0 0 0 / 0.45);
 }
 
-/* ---- 2. Cristal esmerilado ----
-   Sidebar y panel del buscador: fondo semitransparente + blur.
+/* ---- 2. Cristal esmerilado (modales) ----
+   Panel del buscador: fondo semitransparente + blur.
    La opacidad viaja en --af-glass-alpha (0.80-0.95). */
-html[data-af-glass='on'] aside.fixed {
-  background-color: rgb(var(--af-ink-900) / var(--af-glass-alpha, 0.88));
-  backdrop-filter: blur(16px) saturate(1.5);
-  -webkit-backdrop-filter: blur(16px) saturate(1.5);
-}
 html[data-af-glass='on'] div[role='dialog'] > div.relative {
   background-color: rgb(var(--af-ink-850) / var(--af-glass-alpha, 0.88));
   backdrop-filter: blur(18px) saturate(1.5);
   -webkit-backdrop-filter: blur(18px) saturate(1.5);
+}
+
+/* ---- 2b. Fondo del sidebar ----
+   Siempre activo: con 100% es idéntico al sólido actual; al bajarlo el
+   fondo se vuelve transparente (bordes y texto se mantienen). */
+aside.fixed {
+  background-color: rgb(var(--af-ink-900) / var(--af-sidebar-alpha, 1));
 }
 
 /* ---- 2b. Grano de fondo ----
