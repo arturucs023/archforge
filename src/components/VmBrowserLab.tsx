@@ -32,6 +32,7 @@ interface V86Instance {
 }
 
 type Phase = 'idle' | 'loading' | 'booting' | 'running' | 'error'
+type NetStatus = 'off' | 'pending' | 'ok' | 'failed'
 
 /* Medido con tools/test-vm-boot.mjs: desde "emulador listo" hasta el prompt
    de login. Se muestra para que el usuario sepa que esperar, no para
@@ -118,6 +119,7 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
   const [alpineLabel, setAlpineLabel] = useState('3.24')
   const [elapsed, setElapsed] = useState(0)
   const [netEnabled, setNetEnabled] = useState(false)
+  const [netStatus, setNetStatus] = useState<NetStatus>('off')
 
   const termRef = useRef<HTMLDivElement>(null)
   const emulatorRef = useRef<V86Instance | null>(null)
@@ -143,6 +145,7 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
     emulatorRef.current = null
     setPhase('idle')
     setProgress(0)
+    setNetStatus('off')
   }, [])
 
   /* Al navegar a otra pagina con la VM viva, el WASM seguiria executing
@@ -159,6 +162,7 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
     setPhase('loading')
     setProgress(0)
     setError(null)
+    setNetStatus(netEnabled ? 'pending' : 'off')
 
     try {
       const [mod] = await Promise.all([
@@ -215,32 +219,49 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
       emulator.add_listener('download-progress', onProgress)
       emulator.add_listener('emulator-started', onStarted)
 
-      /* Automatiza el arranque: login como root y, si el visitante pidio red,
-         carga el driver virtio_net. Sin esto la VM arranca pero se queda sin
-         conexion (medido con tools/test-vm-net.mjs).
+      /* Arranque automatizado: login como root y configuracion de red.
 
-         v86 emite un evento por byte del puerto serie; los acumulamos para
-         detectar el prompt de login. */
+         No se depende de un unico evento ni de un unico intento. El flujo se
+        -guioniza por reintentos porque la VM emulada va lenta y el relay puede
+         estar ocupado: antes, un solo fallo dejaba la VM sin IP sin explicar
+         nada. Ademas se lee la salida real para decir si ha funcionado. */
       let tail = ''
       let entered = false
+      let attempts = 0
+      const timers: number[] = []
+
       const onSerial = (v: unknown) => {
-        if (typeof v === 'number') tail = (tail + String.fromCharCode(v)).slice(-200)
+        if (typeof v === 'number') {
+          tail = (tail + String.fromCharCode(v)).slice(-400)
+          if (/lease of \d+\.\d+\.\d+\.\d+ obtained/i.test(tail)) setNetStatus('ok')
+        }
       }
       emulator.add_listener('serial0-output-byte', onSerial)
+
+      const later = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms))
+
+      /* Pide IP una vez, y reintenta un par de veces: si el primer udhcpc se
+         agota por el relay ocupado, el siguiente lo consigue. */
+      const configureNet = () => {
+        if (!netEnabled) return
+        attempts += 1
+        setNetStatus('pending')
+        emulator.serial0_send(NET_UP + '\r')
+        later(2500, () => emulator.serial0_send(NET_DHCP + '\r'))
+        if (attempts < 3) later(70000, configureNet)
+      }
 
       const autoLogin = setInterval(() => {
         if (entered || !/login:/i.test(tail)) return
         entered = true
         emulator.serial0_send('root\r')
-        if (!netEnabled) return
-        // A la consola emulada hay que darle margen: si se le pregunta por la
-        // IP demasiado pronto, udhcpc se queda corto y no hay ruta.
-        setTimeout(() => emulator.serial0_send(NET_UP + '\r'), 6000)
-        setTimeout(() => emulator.serial0_send(NET_DHCP + '\r'), 12000)
-      }, 500)
+        // Margen generoso: en la VM emulada la consola va con retraso.
+        later(7000, configureNet)
+      }, 400)
 
       cleanupRef.current = () => {
         clearInterval(autoLogin)
+        timers.forEach((t) => window.clearTimeout(t))
         emulator.remove_listener('serial0-output-byte', onSerial)
         emulator.remove_listener('download-progress', onProgress)
         emulator.remove_listener('emulator-started', onStarted)
@@ -328,7 +349,13 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
           <input
             type="checkbox"
             checked={netEnabled}
-            onChange={(e) => setNetEnabled(e.target.checked)}
+            onChange={(e) => {
+              // Este control solo aparece con la VM parada (v86 fija el backend
+              // de red al crear el emulador), asi que no hay que avisar de nada
+              // mas al activarlo.
+              setNetEnabled(e.target.checked)
+              setNetStatus('off')
+            }}
             className="mt-0.5 h-4 w-4 shrink-0 accent-sky-500"
           />
           <span className="text-xs text-zinc-400">
@@ -342,14 +369,49 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
       )}
 
       {netEnabled && running && (
-        <p className="text-xs text-zinc-500">
-          Red activa. Comprueba la conexión con{' '}
-          <span className="font-mono text-zinc-400">apk update</span> o{' '}
-          <span className="font-mono text-zinc-400">wget -qO- http://dl-cdn.alpinelinux.org/ &gt; /dev/null</span>.
-          No uses <span className="font-mono text-zinc-400">ping</span>: va por ICMP, que el relay no reenvía, y
-          dará error aunque la red funcione. Para ver tu IP:{' '}
-          <span className="font-mono text-zinc-400">ip addr show eth0</span>.
-        </p>
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-zinc-800 bg-ink-900/40 px-4 py-3">
+          <span className="flex items-center gap-2 font-mono text-xs">
+            <span
+              className={cn(
+                'inline-block h-2.5 w-2.5 rounded-full',
+                netStatus === 'ok' ? 'bg-emerald-500'
+                  : netStatus === 'pending' ? 'bg-amber-400 animate-pulse'
+                  : 'bg-rose-500',
+              )}
+              aria-hidden
+            />
+            <span className="text-zinc-300">
+              {netStatus === 'ok' ? 'Red activa' : netStatus === 'pending' ? 'Obteniendo IP…' : 'Sin IP'}
+            </span>
+          </span>
+          {netStatus !== 'ok' && (
+            <button
+              onClick={() => {
+                setNetStatus('pending')
+                emulatorRef.current?.serial0_send(NET_UP + '\r')
+                window.setTimeout(() => emulatorRef.current?.serial0_send(NET_DHCP + '\r'), 2500)
+              }}
+              className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-200 transition-colors hover:bg-sky-500/20"
+            >
+              Reintentar conexión
+            </button>
+          )}
+          <span className="text-xs text-zinc-500">
+            {netStatus === 'ok' ? (
+              <>
+                Comprueba con <span className="font-mono text-zinc-400">apk update</span> o{' '}
+                <span className="font-mono text-zinc-400">wget -qO- http://dl-cdn.alpinelinux.org/</span>.
+                <strong className="text-zinc-500"> No uses ping</strong>: va por ICMP, que el relay no reenvía.
+              </>
+            ) : (
+              <>
+                Si no sale IP, escribe en la terminal:{' '}
+                <span className="font-mono text-zinc-400">{NET_UP}</span> y luego{' '}
+                <span className="font-mono text-zinc-400">udhcpc -i eth0</span>.
+              </>
+            )}
+          </span>
+        </div>
       )}
 
       {busy && (
