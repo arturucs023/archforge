@@ -38,6 +38,11 @@ type Phase = 'idle' | 'loading' | 'booting' | 'running' | 'error'
    prometer velocidad — v86 emula la CPU, no la acelera. */
 const TYPICAL_BOOT_SECONDS = 40
 
+/* Se incrementa a mano en cada despliegue. GitHub Pages sirve con
+   max-age=600, asi que sirve para saber si el navegador ya tiene el bundle
+   nuevo o esta viendo uno cacheado. */
+const BUILD_STAMP = '2026-09-30 net'
+
 /* Red de la VM.
 
    v86 no puede salir a internet por si solo: necesita un proxy que traduzca
@@ -412,6 +417,11 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-zinc-800/80 bg-zinc-900/50 px-3 py-1.5 font-mono text-[10px] text-zinc-600">
           <span><kbd className="kbd">root</kbd> + <kbd className="kbd">Enter</kbd> para entrar</span>
           <span className="ml-auto">Alpine Linux {alpineLabel} &middot; live y efímero</span>
+          {/* GitHub Pages cachea 10 min: este marcador permite saber de un
+              vistazo si el navegador esta mostrando el bundle actual. */}
+          <span className="w-full text-zinc-700 sm:w-auto" title="Version desplegada">
+            build {BUILD_STAMP}
+          </span>
         </div>
       </section>
     </div>
