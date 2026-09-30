@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Check, Download, Info, Moon, Palette, RotateCcw, Save, Sun, Trash2, Upload } from 'lucide-react'
+import { Check, Download, Info, Moon, Palette, RotateCcw, Save, SlidersHorizontal, Sun, Trash2, Upload } from 'lucide-react'
 import { Monitor } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import Breadcrumbs, { PageHeader } from '../components/Breadcrumbs'
@@ -13,6 +13,8 @@ import type { ThemeMode } from '../lib/theme'
 import { usePractice } from '../lib/practice'
 import { loadCursorMode, setCursorMode, CURSOR_STYLES, CURSOR_SIZES, CURSOR_SIZE_MAP, CURSOR_COLORS, loadCursorSize, saveCursorSize, loadCursorGlow, saveCursorGlow, loadCursorOutline, saveCursorOutline, loadCursorColor, saveCursorColor } from '../lib/cursor'
 import type { CursorMode, CursorSize, CursorStyle } from '../lib/cursor'
+import { applyAppearance, applyAccentSaturation, loadAppearance, saveAppearance, DEFAULT_APPEARANCE } from '../lib/appearance'
+import type { AppearanceConfig, BorderRadius, Density, FontWeight, PanelStyle, UiFont } from '../lib/appearance'
 import ProgressBar from '../components/ProgressBar'
 
 export default function SettingsPage() {
@@ -27,6 +29,16 @@ export default function SettingsPage() {
   const [cursorGlow, setCursorGlowState] = useState(() => loadCursorGlow())
   const [cursorOutline, setCursorOutlineState] = useState(() => loadCursorOutline())
   const [cursorColor, setCursorColorState] = useState<string | null>(() => loadCursorColor())
+  const [appearance, setAppearanceState] = useState<AppearanceConfig>(() => loadAppearance())
+
+  const updateAppearance = (patch: Partial<AppearanceConfig>) => {
+    setAppearanceState((prev) => {
+      const next = { ...prev, ...patch }
+      saveAppearance(next)
+      applyAppearance(next)
+      return next
+    })
+  }
 
   const applyCursorSettings = (overrides?: Partial<{ mode: CursorMode; size: CursorSize; glow: boolean; outline: boolean; accentId: AccentId; color: string | null }>) => {
     const m = overrides?.mode ?? cursorMode
@@ -48,6 +60,8 @@ export default function SettingsPage() {
     setAccent(id)
     applyCursorSettings({ accentId: id })
     saveAccent(id)
+    // applyAccent reescribe los tonos base: hay que reaplicar la saturación
+    applyAccentSaturation()
   }
 
   const onImport = (f: File) => {
@@ -401,6 +415,238 @@ export default function SettingsPage() {
       </section>
 
       <section className="mt-5 rounded-2xl border border-zinc-800 bg-ink-900/70 p-5 sm:p-6">
+        <h2 className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">
+          <SlidersHorizontal className="h-4 w-4 text-sky-400" /> Interfaz · 🎛️ Bordes, densidad y efectos
+        </h2>
+        <p className="mt-1 mb-4 max-w-3xl text-sm leading-relaxed text-zinc-400">
+          Personaliza la forma de la interfaz en tiempo real. Todo se guarda en este navegador.
+        </p>
+
+        {/* 1. Bordes y contenedores */}
+        <h3 className="mt-5 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+          🖼️ Bordes y contenedores
+        </h3>
+        <p className="mb-1.5 text-xs text-zinc-500">Radio de esquinas</p>
+        <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Radio de esquinas">
+          {(
+            [
+              ['square', 'Cuadrado', '0px · técnico, brutalista'],
+              ['soft', 'Ligero', '4–8px · limpio y moderno'],
+              ['round', 'Redondeado', '12–16px · el actual'],
+            ] as [BorderRadius, string, string][]
+          ).map(([id, label, desc]) => (
+            <ChoiceCard
+              key={id}
+              groupLabel="Radio de esquinas"
+              label={label}
+              desc={desc}
+              active={appearance.radius === id}
+              onClick={() => updateAppearance({ radius: id })}
+            />
+          ))}
+        </div>
+        <p className="mt-3 mb-1.5 text-xs text-zinc-500">Estilo de paneles</p>
+        <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Estilo de paneles">
+          {(
+            [
+              ['flat', 'Plano', 'Sin bordes, solo color'],
+              ['bordered', 'Con borde', 'Líneas finas · el actual'],
+              ['card', 'Tarjeta', 'Sombra con profundidad'],
+            ] as [PanelStyle, string, string][]
+          ).map(([id, label, desc]) => (
+            <ChoiceCard
+              key={id}
+              groupLabel="Estilo de paneles"
+              label={label}
+              desc={desc}
+              active={appearance.panel === id}
+              onClick={() => updateAppearance({ panel: id })}
+            />
+          ))}
+        </div>
+
+        {/* 2. Efectos visuales */}
+        <h3 className="mt-6 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+          🌫️ Efectos visuales
+        </h3>
+        <div className="flex flex-wrap gap-3">
+          <CheckOpt checked={appearance.glass} onChange={(v) => updateAppearance({ glass: v })}>
+            🪟 Cristal en sidebar y modales
+          </CheckOpt>
+          <CheckOpt checked={appearance.noise} onChange={(v) => updateAppearance({ noise: v })}>
+            🌾 Grano de fondo sutil
+          </CheckOpt>
+        </div>
+        {appearance.glass && (
+          <div className="mt-3 max-w-xs">
+            <div className="flex items-center justify-between text-xs text-zinc-500">
+              <label htmlFor="glass-alpha">Opacidad del cristal</label>
+              <span className="font-mono tabular-nums text-sky-300">{appearance.glassAlpha}%</span>
+            </div>
+            <input
+              id="glass-alpha"
+              type="range"
+              min={80}
+              max={95}
+              step={1}
+              value={appearance.glassAlpha}
+              onChange={(e) => updateAppearance({ glassAlpha: Number(e.target.value) })}
+              className="mt-1 w-full accent-sky-500"
+            />
+          </div>
+        )}
+
+        {/* 3. Densidad */}
+        <h3 className="mt-6 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+          📐 Densidad de la interfaz
+        </h3>
+        <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Densidad de la interfaz">
+          {(
+            [
+              ['compact', 'Compacto', 'Más contenido sin scroll'],
+              ['comfortable', 'Cómodo', 'El espaciado actual'],
+              ['spacious', 'Espacioso', 'Aireado, lectura relajada'],
+            ] as [Density, string, string][]
+          ).map(([id, label, desc]) => (
+            <ChoiceCard
+              key={id}
+              groupLabel="Densidad de la interfaz"
+              label={label}
+              desc={desc}
+              active={appearance.density === id}
+              onClick={() => updateAppearance({ density: id })}
+            />
+          ))}
+        </div>
+
+        {/* 4. Tipografía */}
+        <h3 className="mt-6 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+          🔤 Tipografía de la interfaz
+        </h3>
+        <div className="grid gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Fuente de la interfaz">
+          {(
+            [
+              ['default', 'Estándar', 'La actual'],
+              ['inter', 'Inter', 'Moderna'],
+              ['system', 'Sistema', 'Nativa del SO'],
+              ['roboto', 'Roboto', 'Geométrica'],
+            ] as [UiFont, string, string][]
+          ).map(([id, label, desc]) => (
+            <ChoiceCard
+              key={id}
+              groupLabel="Fuente de la interfaz"
+              label={label}
+              desc={desc}
+              active={appearance.font === id}
+              onClick={() => updateAppearance({ font: id })}
+            />
+          ))}
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Peso de la fuente">
+          {(
+            [
+              ['normal', 'Normal', 'El actual'],
+              ['semibold', 'Seminegrita', 'Mejor en pantallas flojas'],
+            ] as [FontWeight, string, string][]
+          ).map(([id, label, desc]) => (
+            <ChoiceCard
+              key={id}
+              groupLabel="Peso de la fuente"
+              label={label}
+              desc={desc}
+              active={appearance.weight === id}
+              onClick={() => updateAppearance({ weight: id })}
+            />
+          ))}
+        </div>
+        <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+          Inter y Roboto se descargan de Google Fonts al elegirlas; sin conexión se usa la fuente del sistema.
+        </p>
+
+        {/* 5. Color avanzado */}
+        <h3 className="mt-6 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+          🎨 Color avanzado
+        </h3>
+        <div className="max-w-xs">
+          <div className="flex items-center justify-between text-xs text-zinc-500">
+            <label htmlFor="saturation">Saturación del acento</label>
+            <span className="font-mono tabular-nums text-sky-300">{appearance.saturation}%</span>
+          </div>
+          <input
+            id="saturation"
+            type="range"
+            min={0}
+            max={150}
+            step={5}
+            value={appearance.saturation}
+            onChange={(e) => updateAppearance({ saturation: Number(e.target.value) })}
+            className="mt-1 w-full accent-sky-500"
+          />
+          <p className="mt-0.5 flex justify-between font-mono text-[10px] text-zinc-600">
+            <span>0% gris</span>
+            <span>100% oficial</span>
+            <span>150% vibrante</span>
+          </p>
+        </div>
+        <p className="mt-3 mb-1.5 text-xs text-zinc-500">Tono de fondo propio (ideal en tema oscuro)</p>
+        <div className="flex flex-wrap items-center gap-2">
+          {(
+            [
+              ['Azulado', '#0d1526'],
+              ['Verdoso', '#0d1a15'],
+              ['Violáceo', '#16121f'],
+            ] as [string, string][]
+          ).map(([label, hex]) => {
+            const active = appearance.bgCustom?.toLowerCase() === hex
+            return (
+              <button
+                key={label}
+                role="radio"
+                aria-checked={active}
+                title={`Fondo ${label} (${hex})`}
+                onClick={() => updateAppearance({ bgCustom: hex })}
+                className={cn(
+                  'flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
+                  active ? 'border-sky-500/60 bg-sky-500/10 text-sky-300' : 'border-zinc-800 bg-ink-900/60 text-zinc-400 hover:border-zinc-600',
+                )}
+              >
+                <span aria-hidden className="h-4 w-4 rounded-full border border-black/40" style={{ background: hex }} />
+                {label}
+              </button>
+            )
+          })}
+          <label className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-ink-900/60 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-all hover:border-zinc-600">
+            <input
+              type="color"
+              aria-label="Elegir tono de fondo personalizado"
+              value={appearance.bgCustom ?? '#0d1526'}
+              onChange={(e) => updateAppearance({ bgCustom: e.target.value })}
+              className="h-5 w-8 cursor-pointer rounded border border-zinc-700 bg-transparent p-0.5"
+            />
+            Personalizado
+          </label>
+          {appearance.bgCustom && (
+            <button
+              onClick={() => updateAppearance({ bgCustom: null })}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:border-sky-500/50 hover:text-sky-300"
+            >
+              <RotateCcw className="h-3 w-3" /> Fondo del tema
+            </button>
+          )}
+        </div>
+
+        <button
+          onClick={() => {
+            updateAppearance({ ...DEFAULT_APPEARANCE })
+            flash('Interfaz restablecida a valores predeterminados.')
+          }}
+          className="mt-5 inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:border-sky-500/50 hover:text-sky-300"
+        >
+          <RotateCcw className="h-3 w-3" /> Restablecer interfaz
+        </button>
+      </section>
+
+      <section className="mt-5 rounded-2xl border border-zinc-800 bg-ink-900/70 p-5 sm:p-6">
         <h2 className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">Modo de comandos por defecto</h2>
         <p className="mt-1 mb-4 max-w-3xl text-sm leading-relaxed text-zinc-400">
           Afecta a todos los bloques de comandos de la app. El prefijo ($ o #) es solo visual: al copiar nunca se incluye.
@@ -466,7 +712,7 @@ export default function SettingsPage() {
         <p>
           ArchForge v1.4 · guía interactiva educativa para Arch Linux. Contenido redactado a partir de las prácticas recomendadas de la
           comunidad; Arch Linux es un sistema rolling release, así que los procedimientos concretos pueden evolucionar: cuando dudes,
-          contrasta con <span className="font-mono text-zinc-300">wiki.archlinux.org</span>. Esta herramienta no ejecuta comandos ni se
+          contrasta con <a href="https://wiki.archlinux.org/" target="_blank" rel="noopener noreferrer" className="font-mono text-sky-300 underline decoration-dotted underline-offset-2 transition-colors hover:text-sky-200">wiki.archlinux.org</a>. Esta herramienta no ejecuta comandos ni se
           conecta a tu sistema: todo ocurre en tu navegador.
         </p>
       </section>
@@ -476,6 +722,49 @@ export default function SettingsPage() {
 
 function Dot({ color }: { color: string }) {
   return <span className={cn('inline-block h-2.5 w-2.5 rounded-full', color)} />
+}
+
+/** Tarjeta de opción para los selectores de Interfaz (mismo lenguaje visual
+    que el resto de Ajustes). */
+function ChoiceCard({ active, onClick, groupLabel, label, desc }: {
+  active: boolean
+  onClick(): void
+  groupLabel: string
+  label: string
+  desc: string
+}) {
+  return (
+    <button
+      role="radio"
+      aria-checked={active}
+      aria-label={`${groupLabel}: ${label}`}
+      onClick={onClick}
+      className={cn(
+        'rounded-xl border p-3 text-left transition-all',
+        active ? 'border-sky-500/60 bg-sky-500/10' : 'border-zinc-800 bg-ink-900/60 hover:border-zinc-600',
+      )}
+    >
+      <span className={cn('block text-sm font-semibold', active ? 'text-zinc-100' : 'text-zinc-300')}>{label}</span>
+      <span className="mt-0.5 block text-[11px] leading-relaxed text-zinc-500">{desc}</span>
+    </button>
+  )
+}
+
+/** Casilla con el estilo de los toggles de cursor (glow/contorno). */
+function CheckOpt({ checked, onChange, children }: {
+  checked: boolean
+  onChange(v: boolean): void
+  children: React.ReactNode
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-800 bg-ink-900/60 px-3 py-2 text-xs text-zinc-400 transition-all hover:border-zinc-600 has-[:checked]:border-sky-500/60 has-[:checked]:bg-sky-500/10 has-[:checked]:text-sky-300">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="sr-only" />
+      <span className={cn('flex h-4 w-4 items-center justify-center rounded border', checked ? 'border-sky-500 bg-sky-500/25' : 'border-zinc-600 bg-zinc-800')}>
+        {checked && <span className="h-2 w-2 rounded-sm bg-sky-400" />}
+      </span>
+      {children}
+    </label>
+  )
 }
 
 function ConfirmReset({ onReset }: { onReset: () => void }) {

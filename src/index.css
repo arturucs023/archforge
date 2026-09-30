@@ -314,3 +314,171 @@ html.no-custom-cursor [contenteditable='true'],
 html.no-custom-cursor .cursor-text {
   cursor: text !important;
 }
+
+/* ==================== Personalización de la interfaz ====================
+   Todo responde a atributos data-af-* en <html> (src/lib/appearance.ts).
+   Estas reglas van FUERA de @layer para ganar a las utilidades Tailwind.
+   Con valores por defecto no hay overrides: la app se ve igual que siempre. */
+
+/* ---- 1. Radio de bordes ----
+   cuadrado = 0px (brutalista), ligero = 4-8px. rounded-full NO se toca:
+   puntos, pills y toggles lo necesitan para no romperse. */
+html[data-af-radius='square'] .rounded,
+html[data-af-radius='square'] .rounded-sm,
+html[data-af-radius='square'] .rounded-md,
+html[data-af-radius='square'] .rounded-lg,
+html[data-af-radius='square'] .rounded-xl,
+html[data-af-radius='square'] .rounded-2xl {
+  border-radius: 0;
+}
+html[data-af-radius='soft'] .rounded-md {
+  border-radius: 4px;
+}
+html[data-af-radius='soft'] .rounded-lg {
+  border-radius: 6px;
+}
+html[data-af-radius='soft'] .rounded-xl,
+html[data-af-radius='soft'] .rounded-2xl {
+  border-radius: 8px;
+}
+
+/* ---- 1b. Estilo de paneles ----
+   Afecta a .card y a las secciones principales (rounded-* dentro de <main>).
+   Plano = sin bordes; tarjeta = sombra con profundidad. */
+html[data-af-panel='flat'] .card,
+html[data-af-panel='flat'] main section[class*='rounded'] {
+  border-color: transparent;
+  box-shadow: none;
+}
+html[data-af-panel='card'] .card,
+html[data-af-panel='card'] main section[class*='rounded'] {
+  box-shadow:
+    0 12px 32px -14px rgb(0 0 0 / 0.6),
+    0 3px 10px -3px rgb(0 0 0 / 0.45);
+}
+
+/* ---- 2. Cristal esmerilado ----
+   Sidebar y panel del buscador: fondo semitransparente + blur.
+   La opacidad viaja en --af-glass-alpha (0.80-0.95). */
+html[data-af-glass='on'] aside.fixed {
+  background-color: rgb(var(--af-ink-900) / var(--af-glass-alpha, 0.88));
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+}
+html[data-af-glass='on'] div[role='dialog'] > div.relative {
+  background-color: rgb(var(--af-ink-850) / var(--af-glass-alpha, 0.88));
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+}
+
+/* ---- 2b. Grano de fondo ----
+   Textura sutil sobre todo (sin capturar clics) para romper el banding. */
+html[data-af-noise='on'] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");
+}
+
+/* ---- 3. Densidad ----
+   Subconjunto curado: rellenos de main/secciones y separaciones comunes.
+   Compacto = más contenido sin scroll; espacioso = lectura relajada. */
+html[data-af-density='compact'] main {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+html[data-af-density='compact'] .p-4 {
+  padding: 0.7rem;
+}
+html[data-af-density='compact'] .p-5 {
+  padding: 0.8rem;
+}
+html[data-af-density='compact'] .gap-4 {
+  gap: 0.6rem;
+}
+html[data-af-density='compact'] .gap-3 {
+  gap: 0.45rem;
+}
+html[data-af-density='compact'] .space-y-5 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.8rem;
+  margin-bottom: 0;
+}
+html[data-af-density='compact'] .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.6rem;
+  margin-bottom: 0;
+}
+html[data-af-density='compact'] .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.45rem;
+  margin-bottom: 0;
+}
+@media (min-width: 640px) {
+  html[data-af-density='compact'] .sm\:p-6 {
+    padding: 1rem;
+  }
+  html[data-af-density='compact'] main {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+html[data-af-density='spacious'] main {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+html[data-af-density='spacious'] .p-4 {
+  padding: 1.25rem;
+}
+html[data-af-density='spacious'] .p-5 {
+  padding: 1.75rem;
+}
+html[data-af-density='spacious'] .gap-4 {
+  gap: 1.5rem;
+}
+html[data-af-density='spacious'] .gap-3 {
+  gap: 1rem;
+}
+html[data-af-density='spacious'] .space-y-5 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.75rem;
+  margin-bottom: 0;
+}
+html[data-af-density='spacious'] .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.25rem;
+  margin-bottom: 0;
+}
+html[data-af-density='spacious'] .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+@media (min-width: 640px) {
+  html[data-af-density='spacious'] .sm\:p-6 {
+    padding: 2rem;
+  }
+}
+@media (min-width: 1024px) {
+  html[data-af-density='compact'] main {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  html[data-af-density='spacious'] main {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+}
+
+/* ---- 4. Tipografía de la interfaz ----
+   Las fuentes web se inyectan bajo demanda (src/lib/appearance.ts); sin red,
+   la pila de respaldo del sistema las sustituye. */
+html[data-af-font='inter'] body {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+html[data-af-font='system'] body {
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+html[data-af-font='roboto'] body {
+  font-family: 'Roboto', ui-sans-serif, system-ui, sans-serif;
+}
+html[data-af-weight='semibold'] body {
+  font-weight: 500;
+}

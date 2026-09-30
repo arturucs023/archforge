@@ -5,12 +5,14 @@ import { AppProvider } from './context/AppContext'
 import { applyAccent, initAccent } from './lib/accent'
 import { initTheme } from './lib/theme'
 import { initCursor, loadCursorConfig } from './lib/cursor'
+import { initAppearance } from './lib/appearance'
 import './index.css'
 
 const accentId = initAccent()
 initCursor()
 applyAccent(accentId, loadCursorConfig())
 initTheme()
+initAppearance()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
