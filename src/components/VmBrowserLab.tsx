@@ -26,6 +26,7 @@ interface V86Instance {
   destroy(): Promise<void>
   restart(): void
   is_running(): boolean
+  serial0_send(data: string): void
   add_listener(event: string, cb: (arg: unknown) => void): void
   remove_listener(event: string, cb: (arg: unknown) => void): void
 }
@@ -87,6 +88,19 @@ async function fetchIsoInfo(): Promise<{ bytes: number; alpine: string }> {
   if (!j.isoBytes) throw new Error('El manifiesto no declara el tamaño de la ISO')
   return { bytes: j.isoBytes, alpine: j.alpine ?? '3.24' }
 }
+
+/* El kernel de Alpine NO carga solo el driver de la NIC: sin esto la VM se
+   queda sin emitir ni un paquete (medido con tools/test-vm-net.mjs). El
+   Dockerfile de referencia de v86 para Alpine hace lo mismo a mano, asi que no
+   es un fallo nuestro sino de la ISO live.
+
+   Ademas, el prompt de login vive en ttyS0, asi que la entrada va por el puerto
+   serie (serial0_send), no por el teclado PS/2: son canales distintos. */
+const NET_SETUP = [
+  'modprobe virtio_net',
+  'ip link set eth0 up',
+  'udhcpc -i eth0 -q -t 8 -T 2',
+]
 
 export default function VmBrowserLab({ compact = false }: { compact?: boolean }) {
   const [phase, setPhase] = useState<Phase>('idle')
@@ -192,7 +206,33 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
       emulator.add_listener('download-progress', onProgress)
       emulator.add_listener('emulator-started', onStarted)
 
+      /* Automatiza el arranque: login como root y, si el visitante pidio red,
+         carga el driver virtio_net. Sin esto la VM arranca pero se queda sin
+         conexion (medido con tools/test-vm-net.mjs).
+
+         v86 emite un evento por byte del puerto serie; los acumulamos para
+         detectar el prompt de login. */
+      let tail = ''
+      let entered = false
+      const onSerial = (v: unknown) => {
+        if (typeof v === 'number') tail = (tail + String.fromCharCode(v)).slice(-200)
+      }
+      emulator.add_listener('serial0-output-byte', onSerial)
+
+      const autoLogin = setInterval(() => {
+        if (entered || !/login:/i.test(tail)) return
+        entered = true
+        emulator.serial0_send('root\r')
+        if (!netEnabled) return
+        // Uno por vez y espaciados: la consola va emulada y no traga pegados
+        NET_SETUP.forEach((cmd, i) => {
+          setTimeout(() => emulator.serial0_send(cmd + '\r'), 8000 + i * 6000)
+        })
+      }, 500)
+
       cleanupRef.current = () => {
+        clearInterval(autoLogin)
+        emulator.remove_listener('serial0-output-byte', onSerial)
         emulator.remove_listener('download-progress', onProgress)
         emulator.remove_listener('emulator-started', onStarted)
       }
