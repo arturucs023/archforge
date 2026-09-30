@@ -72,8 +72,8 @@ if (EQUIVALENCES.length < 6) fail('equivalencias insuficientes')
 else ok(`equivalencias Arch↔Debian: ${EQUIVALENCES.length}`)
 
 // 7. Conceptos y quizzes
-if (CONCEPTS.length !== 22) fail(`conceptos: ${CONCEPTS.length} (esperaba 22)`)
-else ok('22 conceptos de Aprender Linux')
+if (CONCEPTS.length !== 24) fail(`conceptos: ${CONCEPTS.length} (esperaba 24)`)
+else ok('24 conceptos de Aprender Linux')
 const quizIds = new Set<string>()
 for (const c of CONCEPTS) {
   if (c.quiz) {

@@ -464,7 +464,7 @@ export default function SettingsPage() {
       <section className="mt-5 rounded-2xl border border-zinc-800/60 bg-ink-900/40 p-5 text-sm leading-relaxed text-zinc-400">
         <h2 className="mb-2 font-mono text-xs font-bold uppercase tracking-widest text-zinc-500">Acerca de ArchForge</h2>
         <p>
-          ArchForge v1.0 · guía interactiva educativa para Arch Linux. Contenido redactado a partir de las prácticas recomendadas de la
+          ArchForge v1.4 · guía interactiva educativa para Arch Linux. Contenido redactado a partir de las prácticas recomendadas de la
           comunidad; Arch Linux es un sistema rolling release, así que los procedimientos concretos pueden evolucionar: cuando dudes,
           contrasta con <span className="font-mono text-zinc-300">wiki.archlinux.org</span>. Esta herramienta no ejecuta comandos ni se
           conecta a tu sistema: todo ocurre en tu navegador.

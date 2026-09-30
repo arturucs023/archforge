@@ -79,14 +79,23 @@ export default function CliVsRealNotice() {
         «ArchForge te enseña los conceptos. Una máquina Linux real te permite ponerlos en práctica.»
       </p>
 
-      {/* Enlace preparado: la sección de Virtualización (KVM/QEMU) ya existe */}
-      <a
-        href="#/vm"
-        className="mt-3 inline-flex items-center gap-2 rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-2 text-sm font-medium text-sky-200 transition-colors hover:bg-sky-500/20"
-        aria-label="Preparar un laboratorio Linux: abrir tu máquina virtual Alpine"
-      >
-        🖥️ Preparar un laboratorio Linux <ArrowRight className="h-3.5 w-3.5" />
-      </a>
+      {/* Enlaces: laboratorio directo + curso guiado de virtualización */}
+      <div className="mt-3 flex flex-wrap gap-2">
+        <a
+          href="#/vm"
+          className="inline-flex items-center gap-2 rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-2 text-sm font-medium text-sky-200 transition-colors hover:bg-sky-500/20"
+          aria-label="Preparar un laboratorio Linux: abrir tu máquina virtual Alpine"
+        >
+          🖥️ Preparar un laboratorio Linux <ArrowRight className="h-3.5 w-3.5" />
+        </a>
+        <a
+          href="#/servers/vm"
+          className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-200 transition-colors hover:bg-emerald-500/20"
+          aria-label="Curso de máquina virtual: crear tu laboratorio Linux paso a paso"
+        >
+          🎓 Curso de máquina virtual <ArrowRight className="h-3.5 w-3.5" />
+        </a>
+      </div>
     </section>
   )
 }

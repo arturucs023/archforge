@@ -142,7 +142,7 @@ function ConceptDetail({ concept, index }: { concept: Concept; index: number }) 
           </button>
         ) : (
           <div className="flex items-center justify-center rounded-xl border border-emerald-600/30 bg-emerald-500/5 p-4 text-sm text-emerald-300">
-            Has recorrido todos los fundamentos. Al terminal con la práctica.
+            Has recorrido todos los fundamentos. ¡Al terminal, a practicar!
           </div>
         )}
       </nav>

@@ -1,6 +1,6 @@
 # ArchForge
 
-**Entorno de aprendizaje interactivo para aprender Arch Linux desde cero mediante guias, laboratorios, ejercicios y una terminal Linux real.**
+**Entorno de aprendizaje interactivo para aprender Arch Linux desde cero mediante guías, laboratorios, ejercicios y una terminal Linux real.**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18-61DAFB)](https://react.dev/)
@@ -13,30 +13,30 @@
 
 **[https://arturucs023.github.io/archforge/](https://arturucs023.github.io/archforge/)**
 
-Publicado automaticamente con GitHub Actions en cada `push` a `main` (ver [Despliegue](#despliegue)).
+Publicado automáticamente con GitHub Actions en cada `push` a `main` (ver [Despliegue](#despliegue)).
 
 ---
 
-## Caracteristicas
+## Características
 
-- **Guias de instalacion completas** -- 31 pasos desde la ISO hasta el primer arranque, explicando que se hace, por que y que cambia en el sistema
-- **Arch Builder** -- Configurador que genera una ruta personalizada segun tu hardware, filesystem, bootloader y entorno grafico
+- **Guías de instalación completas** -- 31 pasos desde la ISO hasta el primer arranque, explicando qué se hace, por qué y qué cambia en el sistema
+- **Arch Builder** -- Configurador que genera una ruta personalizada según tu hardware, filesystem, bootloader y entorno gráfico
 - **Comparadores de decisiones** -- ext4 vs Btrfs, GRUB vs systemd-boot, KDE vs GNOME, Wayland vs X11, Bash vs Zsh vs Fish
-- **Solucion de problemas** -- 50+ problemas comunes con sintomas, causas, diagnostico y soluciones paso a paso
-- **Comprobador de estado** -- Guia para interpretar la salida de comandos como `lsblk`, `ip addr`, `systemctl status` o `lspci -k`
-- **Curso de Bash** -- 6 modulos progresivos con proyectos praticos
+- **Solución de problemas** -- 50+ problemas comunes con síntomas, causas, diagnóstico y soluciones paso a paso
+- **Comprobador de estado** -- Guía para interpretar la salida de comandos como `lsblk`, `ip addr`, `systemctl status` o `lspci -k`
+- **Curso de Bash** -- 6 módulos progresivos con proyectos prácticos
 - **Terminal simulada (sandbox)** -- Linux aislado en el navegador para practicar sin riesgo
-- **Laboratorio VM real** -- Terminal xterm.js conectada via SSH a una VM Alpine Linux via QEMU
-- **Laboratorio VM en el navegador** -- Alpine Linux real emulado con v86 (WebAssembly), sin servidor: funciona tambien en GitHub Pages
+- **Laboratorio VM real** -- Terminal xterm.js conectada vía SSH a una VM Alpine Linux vía QEMU
+- **Laboratorio VM en el navegador** -- Alpine Linux real emulado con v86 (WebAssembly), sin servidor: funciona también en GitHub Pages
 - **Aprendizaje por niveles** -- Explicaciones adaptadas a principiante, intermedio o experto
 - **Dashboard y progreso** -- Ruta visual, pasos completados, tiempo estimado y racha de aprendizaje
 - **Buscador global** -- Encuentra comandos, paquetes, tutoriales y conceptos
 
 ---
 
-## Stack tecnologico
+## Stack tecnológico
 
-| Capa | Tecnologia |
+| Capa | Tecnología |
 |------|------------|
 | Frontend | React 18, TypeScript, Vite 5 |
 | Estilos | TailwindCSS 3 |
@@ -49,7 +49,7 @@ Publicado automaticamente con GitHub Actions en cada `push` a `main` (ver [Despl
 
 ## Arquitectura
 
-ArchForge esta compuesto por un frontend React y un servidor Node.js que proporciona acceso a una maquina virtual Linux mediante WebSocket y SSH.
+ArchForge está compuesto por un frontend React y un servidor Node.js que proporciona acceso a una máquina virtual Linux mediante WebSocket y SSH.
 
 ```text
 ┌─────────────────────────────┐
@@ -66,7 +66,7 @@ ArchForge esta compuesto por un frontend React y un servidor Node.js que proporc
 │                             │
 │  HTTP (API status)          │
 │  WebSocket (terminal)       │
-│  SSH2 (conexion a VM)       │
+│  SSH2 (conexión a VM)       │
 └──────────────┬──────────────┘
                │ SSH (puerto 2222)
                ▼
@@ -80,10 +80,10 @@ ArchForge esta compuesto por un frontend React y un servidor Node.js que proporc
 
 1. El usuario escribe comandos en xterm.js (browser)
 2. Los datos viajan por WebSocket al servidor Node.js
-3. El servidor los reenvia por SSH a la VM QEMU
+3. El servidor los reenvía por SSH a la VM QEMU
 4. La salida viaja en sentido contrario hasta renderizarse en el terminal
 
-El frontend funciona de forma independiente (sin VM) para la mayoria de funcionalidades. La VM solo es necesaria para el laboratorio de comandos reales.
+El frontend funciona de forma independiente (sin VM) para la mayoría de funcionalidades. La VM solo es necesaria para el laboratorio de comandos reales.
 
 ---
 
@@ -95,7 +95,7 @@ El frontend funciona de forma independiente (sin VM) para la mayoria de funciona
 
 ---
 
-## Inicio rapido
+## Inicio rápido
 
 ### Solo frontend
 
@@ -110,7 +110,7 @@ Abre `http://localhost:5173`.
 
 ### Con laboratorio VM
 
-Requiere QEMU y los recursos de la VM proporcionados en la seccion de Releases.
+Requiere QEMU y los recursos de la VM proporcionados en la sección de Releases.
 
 ```bash
 npm install
@@ -125,10 +125,10 @@ La VM usa QEMU para ejecutar Alpine Linux de forma aislada:
 
 1. `vm-server.mjs` levanta un servidor HTTP + WebSocket en puerto 7860
 2. Arranca una VM QEMU con SSH forwarding (puerto 2222)
-3. La pagina `/vm` conecta xterm.js via WebSocket al servidor
+3. La página `/vm` conecta xterm.js via WebSocket al servidor
 4. El usuario escribe comandos que viajan: xterm.js -> WebSocket -> SSH -> VM
 
-**Si QEMU no esta instalado**, el servidor HTTP funciona normalmente pero la VM mostrara un aviso con instrucciones de instalacion. La CLI educativa (sandbox) sigue disponible.
+**Si QEMU no está instalado**, el servidor HTTP funciona normalmente pero la VM mostrará un aviso con instrucciones de instalación. La CLI educativa (sandbox) sigue disponible.
 
 ### Instalar QEMU
 
@@ -145,18 +145,18 @@ sudo pacman -S qemu-full
 
 ### Recursos de la VM
 
-Las imagenes de la maquina virtual no se almacenan en el repositorio por su tamano. Se distribuyen mediante **GitHub Releases**.
+Las imágenes de la máquina virtual no se almacenan en el repositorio por su tamaño. Se distribuyen mediante **GitHub Releases**.
 
 Para utilizar el laboratorio VM real:
 
-1. Descarga los archivos de la ultima [Release](https://github.com/arturucs023/archforge/releases)
-2. Colocalos en la carpeta `vm/`
+1. Descarga los archivos de la última [Release](https://github.com/arturucs023/archforge/releases)
+2. Colócalos en la carpeta `vm/`
 
 ```text
 vm/
 ├── base.qcow2              # Disco base (descargar de Releases)
 ├── build/                  # Logs generados (NO subir a Git)
-└── runtime/                # Archivos temporales de ejecucion (NO subir a Git)
+└── runtime/                # Archivos temporales de ejecución (NO subir a Git)
 ```
 
 | Archivo | Origen | En Git |
@@ -166,22 +166,22 @@ vm/
 | `runtime/` | Generado localmente | No |
 | `*.qcow2` (overlay) | Generado localmente | No |
 
-**Nota:** Si solo quieres usar la terminal simulada (sandbox) o el contenido de las guias, no necesitas descargar nada de Releases. La VM es opcional.
+**Nota:** Si solo quieres usar la terminal simulada (sandbox) o el contenido de las guías, no necesitas descargar nada de Releases. La VM es opcional.
 
 ---
 
 ## Scripts
 
-| Comando | Descripcion |
+| Comando | Descripción |
 |---------|-------------|
 | `npm run dev` | Servidor de desarrollo con hot reload |
-| `npm run build` | Compila TypeScript y genera la version de produccion en `dist/` |
-| `npm run serve` | Sirve la version de produccion en `http://127.0.0.1:4173` |
+| `npm run build` | Compila TypeScript y genera la versión de producción en `dist/` |
+| `npm run serve` | Sirve la versión de producción en `http://127.0.0.1:4173` |
 | `npm start` | Build + lanza backend VM + frontend en produccion |
 | `npm run vm` | Lanza solo el servidor VM (requiere QEMU) |
 | `npm run dev:vm` | Desarrollo con servidor VM en paralelo |
 | `npm run serve:pages` | Compila y sirve `dist/` en un subdirectorio, simulando GitHub Pages (soporta Range) |
-| `npm run setup:vm-web` | Descarga la ISO de Alpine, los BIOS y el `.wasm` de v86 a `public/vm/` |
+| `npm run setup:vm-web` | Descarga la ISO de Alpine, las BIOS y el `.wasm` de v86 a `public/vm/` |
 
 ---
 
@@ -193,10 +193,10 @@ El sitio se publica en GitHub Pages mediante `.github/workflows/deploy.yml`.
 2. En **Source**, selecciona **GitHub Actions**
 3. Haz `push` a `main`: el workflow compila y publica automaticamente
 
-La app usa **enrutado por hash** (`#/ruta`), asi que no necesita reglas de
+La app usa **enrutado por hash** (`#/ruta`), así que no necesita reglas de
 reescritura en el servidor: cada ruta resuelve siempre al `index.html`.
 Los assets se emiten con ruta relativa (`base: './'` en `vite.config.ts`), lo
-que permite servir la build tanto en la raiz de un dominio como en el
+que permite servir la build tanto en la raíz de un dominio como en el
 subdirectorio `/archforge/`.
 
 ### Lo que NO funciona en el sitio publicado
@@ -233,10 +233,6 @@ reconstruye con `bash tools/build-custom-iso.sh` para inyectar paquetes en
 El visitante no descarga nada más ni escribe ningún `apk add`: las herramientas
 aparecen solas. Si el build de la ISO falla por lo que sea, el script hace
 fallback a la ISO base y el deploy sigue (la VM arranca igual, solo sin extras).
-
-Detalle técnico: la ISO debe ser de **32 bits (x86)**. v86 no emula las
-extensiones de 64 bits, así que una imagen `x86_64` se detiene con
-`This kernel requires an x86-64 CPU, but only detected an i686 CPU`.
 
 ### Internet en la VM (versión web)
 
@@ -299,19 +295,19 @@ archforge/
 │   └── runtime/             # Temporales (generado localmente)
 ├── tools/        # Herramientas auxiliares
 ├── qa/           # Tests
-└── script/       # Scripts de ejecucion
+└── script/       # Scripts de ejecución
 ```
 
 ---
 
 ## Seguridad
 
-El laboratorio VM esta disenado como un entorno aislado y efimero para practicas educativas.
+El laboratorio VM está diseñado como un entorno aislado y efímero para prácticas educativas.
 
 - La VM utiliza red aislada con SSH forwarding
 - Las sesiones pueden restablecerse completamente
-- Los cambios realizados durante una sesion no afectan el sistema anfitrion
-- No se recomienda almacenar informacion personal o sensible en la VM
+- Los cambios realizados durante una sesión no afectan el sistema anfitrión
+- No se recomienda almacenar información personal o sensible en la VM
 
 ---
 
@@ -321,35 +317,6 @@ El laboratorio VM esta disenado como un entorno aislado y efimero para practicas
 - No hay backend ni cuenta de usuario
 - Opciones de export/import para migrar entre navegadores
 - Borrar datos del navegador = borrar progreso
-
----
-
-## Estado del proyecto
-
-**ArchForge v1.0 -- Development**
-
-El proyecto se encuentra actualmente en desarrollo activo.
-
-### Implementado
-
-- Guias de instalacion (31 pasos)
-- Arch Builder con ruta personalizada
-- Comparadores de decisiones
-- Solucion de problemas (50+ problemas)
-- Comprobador de estado
-- Terminal simulada (sandbox)
-- Laboratorio Linux real con QEMU + SSH
-- Curso de Bash (6 modulos)
-- Cursos de servidores
-- Sistema de progreso con localStorage
-- Buscador global
-
-### Proximamente
-
-- Mas contenido de secciones
-- Mas laboratorios CLI
-- Mas cursos de servidores
-- Mejoras del laboratorio VM
 
 ---
 
