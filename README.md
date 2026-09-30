@@ -222,6 +222,33 @@ Los recursos del laboratorio en web (~51 MB) no están en el repo: los baja el
 build con `npm run setup:vm-web`, que descarga la ISO, los BIOS y copia el
 `.wasm` del emulador a `public/vm/`.
 
+### Internet en la VM (versión web)
+
+v86 no sale a internet por sí solo: necesita un proxy que traduzca las tramas de la NIC
+emulada a WebSocket. Hay un interruptor en la página `#/vm` que lo activa antes de arrancar.
+
+Por defecto usa el relay público `wss://relay.widgetry.org/` (el que aparece en la
+documentación de v86), así que no hay nada que desplegar. **El tráfico sale por un servidor
+de terceros y tiene ancho de banda limitado**: sirve para practicar `apk`, no para datos
+personales.
+
+Para un despliegue propio, monta un relay y cambia `RELAY_URL` en
+`src/components/VmBrowserLab.tsx`:
+
+```bash
+# en el VPS
+docker run -d --name relay --privileged --net=host \
+  ghcr.io/gdm85/websockproxy:latest --net=tap --mac 52:54:00:12:34:56
+```
+
+```ts
+const RELAY_URL = 'wss://tu-servidor.example/relay'
+```
+
+Alternativas de red documentadas en
+[`docs/networking.md` de v86](https://github.com/copy/v86/blob/master/docs/networking.md):
+`wisp` (TCP completo vía WISP) o `fetch` (solo HTTP, necesita CORS proxy).
+
 ### Probar el laboratorio VM sin publicarlo
 
 ```bash

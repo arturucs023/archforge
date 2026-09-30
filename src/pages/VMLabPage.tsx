@@ -414,6 +414,11 @@ export default function VMLabPage() {
             La primera vez descarga la imagen (49 MB) y queda cacheada por el navegador. Cada arranque
             es efimero: al recargar empiezas de cero.
           </p>
+          <p className="mt-2 text-xs text-zinc-500">
+            Puedes activar internet antes de arrancar, pero el trafico sale por un relay publico de
+            terceros con ancho de banda limitado: util para practicar <span className="font-mono">apk</span>, no
+            para datos personales.
+          </p>
         </div>
       )}
 

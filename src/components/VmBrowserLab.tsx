@@ -37,6 +37,18 @@ type Phase = 'idle' | 'loading' | 'booting' | 'running' | 'error'
    prometer velocidad — v86 emula la CPU, no la acelera. */
 const TYPICAL_BOOT_SECONDS = 40
 
+/* Red de la VM.
+
+   v86 no puede salir a internet por si solo: necesita un proxy que traduzca
+   las tramas de la NIC emulada a WebSocket. Este es el relay publico que
+   aparece en la documentacion de v86, asi que no hay nada que desplegar.
+
+   AVISO: con el, TODO el trafico de la VM pasa por un servidor de terceros
+   (limitado y fuera de nuestro control). Para un despliegue propio lo
+   ideal es montar relay propio; cambia solo esta constante por la URL wss://
+   de tu servidor. Ver README, seccion "Internet en la VM". */
+const RELAY_URL = 'wss://relay.widgetry.org/'
+
 const WASM_URL = 'vm/v86.wasm'
 const BIOS_URL = 'vm/seabios.bin'
 const VGA_BIOS_URL = 'vm/vgabios.bin'
@@ -82,6 +94,7 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
   const [error, setError] = useState<string | null>(null)
   const [alpineLabel, setAlpineLabel] = useState('3.24')
   const [elapsed, setElapsed] = useState(0)
+  const [netEnabled, setNetEnabled] = useState(false)
 
   const termRef = useRef<HTMLDivElement>(null)
   const emulatorRef = useRef<V86Instance | null>(null)
@@ -150,6 +163,13 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
         boot_order: 0x123, // 0x123 = CD antes que disco
         disable_speaker: true,
         disable_mouse: true,
+        /* Red opcional: sin relay el backend "inbrowser" deja la VM aislada.
+           Se enciende solo si el visitor lo pide, porque el trafico sale por
+           un relay de terceros (ver RELAY_URL). Alpine trae virtio_net, que
+           es justo el driver que necesita el tipo "virtio". */
+        net_device: netEnabled
+          ? { type: 'virtio', relay_url: RELAY_URL }
+          : { type: 'virtio', relay_url: 'inbrowser' },
         // El framebuffer de Alpine pasa a modo gráfico: el texto útil sale
         // por ttyS0, que se pinta en xterm. Sin canvas no se gasta CPU en VGA.
         screen_container: null,
@@ -251,6 +271,34 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
           </button>
         )}
       </div>
+
+      {/* Red — se decide ANTES de arrancar: v86 fija el backend al crear el
+          emulador, asi que cambiarla luego exigiria reiniciarlo. */}
+      {!running && !busy && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-800 bg-ink-900/40 px-4 py-3">
+          <input
+            type="checkbox"
+            checked={netEnabled}
+            onChange={(e) => setNetEnabled(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-sky-500"
+          />
+          <span className="text-xs text-zinc-400">
+            <span className="font-semibold text-zinc-300">Conectar internet a la VM</span>
+            <br />
+            Al activarlo, el trafico de la maquina sale por un relay publico de terceros
+            (<span className="font-mono text-zinc-500">relay.widgetry.org</span>) con ancho de banda
+            limitado. No envies datos personales por aqui.
+          </span>
+        </label>
+      )}
+
+      {netEnabled && running && (
+        <p className="text-xs text-zinc-500">
+          Red activa. En Alpine: <span className="font-mono text-zinc-400">ip addr</span> para ver la interfaz,{' '}
+          <span className="font-mono text-zinc-400">ping -c3 dl-cdn.alpinelinux.org</span> para comprobar salida, y{' '}
+          <span className="font-mono text-zinc-400">apk update</span> para instalar paquetes.
+        </p>
+      )}
 
       {busy && (
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
