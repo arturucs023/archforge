@@ -48,7 +48,7 @@ export default function Topbar({ onMenu, showOnDesktop = false }: { onMenu: () =
   return (
     <header
       className={cn(
-        'sticky top-0 z-20 flex h-14 items-center gap-2 px-3 sm:px-5',
+        'af-topbar sticky top-0 z-20 flex h-14 items-center gap-2 px-3 sm:px-5',
         appearance.headerStyle === 'integrated'
           ? 'border-b border-transparent'
           : 'border-b border-zinc-800/80 bg-ink-950/85 backdrop-blur-md',

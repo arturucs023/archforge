@@ -373,6 +373,13 @@ aside.fixed {
   background-color: rgb(var(--af-ink-900) / var(--af-sidebar-alpha, 1));
 }
 
+/* ---- 2c. Cabecera espejada con sidebar a la derecha ----
+   row-reverse intercambia los lados exactos: menú+búsqueda a la derecha,
+   racha/reloj/modos/ajustes a la izquierda. El botón de plegar viaja solo. */
+html[data-af-sbside='right'] header.af-topbar {
+  flex-direction: row-reverse;
+}
+
 /* ---- 2b. Grano de fondo ----
    Textura sutil sobre todo (sin capturar clics) para romper el banding. */
 html[data-af-noise='on'] body::after {

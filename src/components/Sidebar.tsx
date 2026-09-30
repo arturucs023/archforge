@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Hammer, Monitor, PanelLeftClose, Scale, Activity, LayoutDashboard, Server, SquareTerminal, GraduationCap, FlaskConical, Target } from 'lucide-react'
+import { ChevronDown, Hammer, Monitor, PanelLeftClose, PanelRightClose, Scale, Activity, LayoutDashboard, Server, SquareTerminal, GraduationCap, FlaskConical, Target } from 'lucide-react'
 import { GROUPS, SECTIONS } from '../data/sections'
 import { REGISTRY, stepUnits } from '../data/registry'
 import { SERVER_COURSES, courseProgress, serverLabDoneId, serverModuleDoneId } from '../data/servers'
@@ -92,7 +92,7 @@ export default function Sidebar({ open, onClose, hidden = false, onToggle }: { o
               title={hidden ? 'Abrir barra lateral' : 'Cerrar barra lateral'}
               className="shrink-0 rounded-lg border border-transparent p-2 text-zinc-500 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             >
-              <PanelLeftClose className="h-[18px] w-[18px]" />
+              {right ? <PanelRightClose className="h-[18px] w-[18px]" /> : <PanelLeftClose className="h-[18px] w-[18px]" />}
             </button>
           )}
         </div>
