@@ -33,9 +33,15 @@ jobs:
         run: npm ci
 
       # Recursos del laboratorio VM en el navegador (v86 + ISO de Alpine).
-      # No viven en git: se descargan aqui para que el repo no engorde 68 MB.
+      # No viven en git: se descargan aqui para que el repo no engorde.
       - name: Setup browser VM assets
         run: npm run setup:vm-web
+
+      # Paquetes extra (nano, vim...) que la VM instala al arrancar. Se sirven
+      # desde el mismo origen que la pagina, asi que la VM los baja con el
+      # backend fetch de v86 sin CORS y sin relay de terceros.
+      - name: Setup browser VM packages
+        run: npm run setup:vm-pkgs
 
       - name: Build
         run: npm run build
