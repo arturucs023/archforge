@@ -32,6 +32,11 @@ interface V86Instance {
 
 type Phase = 'idle' | 'loading' | 'booting' | 'running' | 'error'
 
+/* Medido con tools/test-vm-boot.mjs: desde "emulador listo" hasta el prompt
+   de login. Se muestra para que el usuario sepa que esperar, no para
+   prometer velocidad — v86 emula la CPU, no la acelera. */
+const TYPICAL_BOOT_SECONDS = 40
+
 const WASM_URL = 'vm/v86.wasm'
 const BIOS_URL = 'vm/seabios.bin'
 const VGA_BIOS_URL = 'vm/vgabios.bin'
@@ -76,6 +81,7 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [alpineLabel, setAlpineLabel] = useState('3.24')
+  const [elapsed, setElapsed] = useState(0)
 
   const termRef = useRef<HTMLDivElement>(null)
   const emulatorRef = useRef<V86Instance | null>(null)
@@ -83,6 +89,16 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
 
   const running = phase === 'running' || phase === 'booting'
   const busy = phase === 'loading'
+
+  /* Cronómetro mientras arranca: sin esto el usuario no sabe si cuelga o
+     solo va lento (que es lo normal en un emulador). */
+  useEffect(() => {
+    if (phase !== 'booting') return
+    const t0 = Date.now()
+    setElapsed(0)
+    const id = window.setInterval(() => setElapsed(Math.round((Date.now() - t0) / 1000)), 500)
+    return () => window.clearInterval(id)
+  }, [phase])
 
   const stop = useCallback(async () => {
     try { await emulatorRef.current?.stop() } catch { /* ya estaba parado */ }
@@ -161,7 +177,10 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
         emulator.remove_listener('emulator-started', onStarted)
       }
 
-      await emulator.run()
+      /* NO llamar a emulator.run(): con autostart:true v86 ya arranca solo al
+         terminar de cargar WASM+BIOS. Invocarlo aqui compite con esa
+         inicializacion asincrona y revienta con
+         "can't access property run, this.v86 is undefined". */
       setPhase('booting')
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -172,7 +191,7 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
   const statusText = {
     idle: 'Apagada',
     loading: `Descargando Alpine… ${progress}%`,
-    booting: 'Arrancando Linux…',
+    booting: `Arrancando Linux… ${elapsed}s (suele tardar ~${TYPICAL_BOOT_SECONDS}s)`,
     running: 'Linux conectado',
     error: 'Error al arrancar',
   }[phase]

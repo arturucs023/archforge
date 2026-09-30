@@ -37,11 +37,18 @@ function dump() {
   return screen.map((r) => (r || []).join('').replace(/\s+$/, '')).filter((l) => l.length)
 }
 
+const VM = path.join(ROOT, 'public', 'vm')
+
+/* RAM emulada en MB. Menos memoria = menos trabajo para el emulador, pero
+   Alpine necesita arrancar con margen. Se pasa como 4º y 5º argumento:
+   node tools/test-vm-boot.mjs 200 <base-url> <mb-ram> <mb-video> */
+const MEM_MB = Number(process.argv[4] ?? 64)
+const VGA_MB = Number(process.argv[5] ?? 2)
+
 console.log(`Alpine  : ${(isoSize / 1048576).toFixed(1)} MB`)
 console.log(`Servidor: ${BASE}`)
+console.log(`Memoria : ${MEM_MB} MB RAM + ${VGA_MB} MB video`)
 console.log(`Presupuesto: ${BUDGET}s\n`)
-
-const VM = path.join(ROOT, 'public', 'vm')
 
 /* En Node v86 resuelve TODOS los recursos con fs.readFile (no usa fetch), asi
    que aqui van rutas de disco. El camino por HTTP con peticiones por rango que
@@ -49,8 +56,8 @@ const VM = path.join(ROOT, 'public', 'vm')
    responde 206 igual que GitHub Pages. */
 const emulator = new V86({
   wasm_path: path.join(VM, 'v86.wasm'),
-  memory_size: 64 * 1024 * 1024,
-  vga_memory_size: 2 * 1024 * 1024,
+  memory_size: MEM_MB * 1024 * 1024,
+  vga_memory_size: VGA_MB * 1024 * 1024,
   bios: { url: path.join(VM, 'seabios.bin') },
   vga_bios: { url: path.join(VM, 'vgabios.bin') },
   cdrom: { url: path.join(VM, 'alpine.iso'), async: true, size: isoSize },
@@ -110,13 +117,14 @@ const watchSerial = setInterval(() => {
   for (const [re, label] of MARKS) {
     if (re.test(serial) && !seen.has(label)) {
       seen.add(label)
-      console.log(`[+] ${label}`)
+      console.log(`[+] ${label} (+${((Date.now() - t0) / 1000).toFixed(1)}s)`)
     }
   }
-}, 400)
+}, 200)
 
 const seen = new Set()
 let loggedIn = false
+const t0 = Date.now()
 
 /* En Alpine no hay contrasena: basta con escribir root y pulsar Enter. */
 const login = setInterval(() => {

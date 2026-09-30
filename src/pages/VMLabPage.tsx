@@ -392,10 +392,27 @@ export default function VMLabPage() {
             el kernel de Linux se ejecuta dentro de la pestana. Es un Alpine de verdad, con sus
             comandos reales; solo cambia quien hace de &laquo;maquina virtual&raquo;.
           </p>
+          <div className="mt-2 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3">
+            <p className="text-xs font-semibold text-amber-200">Sobre el rendimiento, sin adornos</p>
+            <p className="mt-1 text-xs text-zinc-400">
+              El emulador <strong>interpreta</strong> cada instruccion x86 en JavaScript, asi que
+              va entre 20 y 50 veces mas lento que un Linux real: el arranque tarda unos
+              40 segundos y los comandos notan el retraso. Funciona, pero no es un sustituto de una
+              maquina virtual de verdad.
+            </p>
+            <p className="mt-1 text-xs text-zinc-400">
+              Si necesitas velocidad real, la version con QEMU (clona el repo y usa{' '}
+              <span className="font-mono text-zinc-300">npm start</span>) o una VM en tu propio
+              equipo van a velocidad nativa. Y si prefieres practicar sin esperar, la{' '}
+              <a href="#/terminal" className="text-sky-300 underline decoration-dotted">
+                CLI educativa (sandbox)
+              </a>{' '}
+              responde al instante.
+            </p>
+          </div>
           <p className="mt-2 text-xs text-zinc-500">
             La primera vez descarga la imagen (49 MB) y queda cacheada por el navegador. Cada arranque
-            es efimero: al recargar empiezas de cero. Si prefieres la version con QEMU real y
-            persistencia, clona el repo y usa <span className="font-mono text-zinc-400">npm start</span>.
+            es efimero: al recargar empiezas de cero.
           </p>
         </div>
       )}
