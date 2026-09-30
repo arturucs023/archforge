@@ -411,7 +411,7 @@ export default function VMLabPage() {
             </p>
           </div>
           <p className="mt-2 text-xs text-zinc-500">
-            La primera vez descarga la imagen (49 MB) y queda cacheada por el navegador. Cada arranque
+            La primera vez descarga la imagen (~70 MB con herramientas incluidas) y queda cacheada por el navegador. Cada arranque
             es efimero: al recargar empiezas de cero.
           </p>
           <p className="mt-2 text-xs text-zinc-500">

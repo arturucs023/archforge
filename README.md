@@ -218,21 +218,39 @@ Detalle técnico: la ISO debe ser de **32 bits (x86)**. v86 no emula las
 extensiones de 64 bits, así que una imagen `x86_64` se detiene con
 `This kernel requires an x86-64 CPU, but only detected an i686 CPU`.
 
-Los recursos del laboratorio en web (~51 MB) no están en el repo: los baja el
+Los recursos del laboratorio en web (~70 MB) no están en el repo: los baja el
 build con `npm run setup:vm-web`, que descarga la ISO, los BIOS y copia el
 `.wasm` del emulador a `public/vm/`.
+
+### ISO personalizada: herramientas dentro de la imagen
+
+La ISO de Alpine que arranca la VM no es la oficial tal cual: el workflow la
+reconstruye con `bash tools/build-custom-iso.sh` para inyectar paquetes en
+`/extra-pkgs/`. Al arrancar, la VM los instala **desde el propio CD, sin red**:
+
+`vim nano zip bzip2 gzip tree mandoc man-pages htop curl git` (+ dependencias)
+
+El visitante no descarga nada más ni escribe ningún `apk add`: las herramientas
+aparecen solas. Si el build de la ISO falla por lo que sea, el script hace
+fallback a la ISO base y el deploy sigue (la VM arranca igual, solo sin extras).
+
+Detalle técnico: la ISO debe ser de **32 bits (x86)**. v86 no emula las
+extensiones de 64 bits, así que una imagen `x86_64` se detiene con
+`This kernel requires an x86-64 CPU, but only detected an i686 CPU`.
 
 ### Internet en la VM (versión web)
 
 v86 no sale a internet por sí solo: necesita un proxy que traduzca las tramas de la NIC
-emulada a WebSocket. Hay un interruptor en la página `#/vm` que lo activa antes de arrancar.
+emulada a WebSocket. Internet viene **activada por defecto** en `#/vm` (se puede
+quitar para aislar la VM) y el relay se comprueba antes de arrancar.
 
-Por defecto usa el relay público `wss://relay.widgetry.org/` (el que aparece en la
+Usa el relay público `wss://relay.widgetry.org/` (el que aparece en la
 documentación de v86), así que no hay nada que desplegar. **El tráfico sale por un servidor
-de terceros y tiene ancho de banda limitado**: sirve para practicar `apk`, no para datos
-personales.
+de terceros y tiene ancho de banda limitado**: sirve para practicar, no para datos
+personales. Para comprobar salida real usa `apk update` o `wget` (TCP): `ping`
+usa ICMP, que los relays no reenvían, y falla aunque la red funcione.
 
-Para un despliegue propio, monta un relay y cambia `RELAY_URL` en
+Para un despliegue propio, monta un relay y añade su URL a `RELAYS` en
 `src/components/VmBrowserLab.tsx`:
 
 ```bash
@@ -242,7 +260,7 @@ docker run -d --name relay --privileged --net=host \
 ```
 
 ```ts
-const RELAY_URL = 'wss://tu-servidor.example/relay'
+const RELAYS = ['wss://tu-servidor.example/relay']
 ```
 
 Alternativas de red documentadas en
@@ -254,7 +272,8 @@ Alternativas de red documentadas en
 ```bash
 npm run setup:vm-web   # descarga ISO + BIOS + wasm en public/vm/
 npm run serve:pages    # simula GitHub Pages en http://127.0.0.1:8080/archforge/
-node tools/test-vm-boot.mjs   # arranca Alpine en Node y comprueba el login
+node tools/test-vm-boot.mjs       # arranca Alpine en Node y comprueba el login
+node tools/test-vm-customiso.mjs  # verifica la ISO personalizada + paquetes sin red
 ```
 
 ### Probar la build como Pages

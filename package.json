@@ -13,7 +13,7 @@
     "serve": "vite preview --host 127.0.0.1 --port 4173 --strictPort --open",
     "serve:pages": "npm run build && node tools/serve-pages.cjs",
     "setup:vm-web": "node tools/setup-vm-web.mjs",
-    "setup:vm-pkgs": "node tools/setup-vm-pkgs.mjs"
+    "resolve:vm-pkgs": "node tools/resolve-vm-pkgs.mjs"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.11.0",

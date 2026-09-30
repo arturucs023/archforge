@@ -11,7 +11,8 @@
      que el canvas no sirve para leer texto. Con xterm se puede copiar.
    - ISO de 32 bits (x86): v86 no emula extensiones de 64 bits, y una imagen
      x86_64 se detiene con "This kernel requires an x86-64 CPU".
-   - Carga perezosa: 49 MB solo se descargan al pulsar "Arrancar".
+   - Carga perezosa: la imagen (~70 MB con herramientas) solo se descarga al
+     pulsar "Arrancar".
    - Cada arranque es efimero, igual que el overlay de la version local. */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -33,6 +34,7 @@ interface V86Instance {
 
 type Phase = 'idle' | 'loading' | 'booting' | 'running' | 'error'
 type NetStatus = 'off' | 'pending' | 'ok' | 'failed'
+type ToolsStatus = 'unknown' | 'installing' | 'ready' | 'missing'
 
 /* Medido con tools/test-vm-boot.mjs: desde "emulador listo" hasta el prompt
    de login. Se muestra para que el usuario sepa que esperar, no para
@@ -42,19 +44,47 @@ const TYPICAL_BOOT_SECONDS = 40
 /* Se incrementa a mano en cada despliegue. GitHub Pages sirve con
    max-age=600, asi que sirve para saber si el navegador ya tiene el bundle
    nuevo o esta viendo uno cacheado. */
-const BUILD_STAMP = '2026-09-30 net'
+const BUILD_STAMP = '2026-10-01 pkgs+net'
 
 /* Red de la VM.
 
    v86 no puede salir a internet por si solo: necesita un proxy que traduzca
-   las tramas de la NIC emulada a WebSocket. Este es el relay publico que
-   aparece en la documentacion de v86, asi que no hay nada que desplegar.
+   las tramas de la NIC emulada a WebSocket. Se usa el relay publico de la
+   documentacion de v86; antes de arrancar se comprueba que responde y, si no,
+   se avisa en vez de dejar un DHCP colgado.
 
-   AVISO: con el, TODO el trafico de la VM pasa por un servidor de terceros
-   (limitado y fuera de nuestro control). Para un despliegue propio lo
-   ideal es montar relay propio; cambia solo esta constante por la URL wss://
-   de tu servidor. Ver README, seccion "Internet en la VM". */
-const RELAY_URL = 'wss://relay.widgetry.org/'
+   AVISO: con el, el trafico de la VM pasa por un servidor de terceros
+   (limitado y fuera de nuestro control). Para un despliegue propio lo ideal
+   es montar relay propio; anade su URL a RELAYS. Ver README. */
+const RELAYS = ['wss://relay.widgetry.org/']
+
+/* Prueba cada relay con un WebSocket real y devuelve el primero que abre.
+   Si ninguno responde, se devuelve el primero igualmente para intentarlo de
+   todos modos, pero marcandolo como no accesible. */
+async function pickRelay(timeoutMs = 6000): Promise<{ url: string; reachable: boolean }> {
+  for (const url of RELAYS) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const ws = new WebSocket(url)
+        const t = window.setTimeout(() => {
+          try { ws.close() } catch { /* noop */ }
+          reject(new Error('timeout'))
+        }, timeoutMs)
+        ws.onopen = () => {
+          window.clearTimeout(t)
+          try { ws.close() } catch { /* noop */ }
+          resolve()
+        }
+        ws.onerror = () => {
+          window.clearTimeout(t)
+          reject(new Error('error'))
+        }
+      })
+      return { url, reachable: true }
+    } catch { /* prueba el siguiente */ }
+  }
+  return { url: RELAYS[0], reachable: false }
+}
 
 const WASM_URL = 'vm/v86.wasm'
 const BIOS_URL = 'vm/seabios.bin'
@@ -84,30 +114,42 @@ function loadCSS(href: string): Promise<void> {
   })
 }
 
-/* Tamano exacto de la ISO, leido del manifiesto que genera
-   tools/setup-vm-web.mjs. v86 lo necesita para pedir el fichero por rangos
-   en vez de descargarlo de una sentada. */
-async function fetchIsoInfo(): Promise<{ bytes: number; alpine: string }> {
+/* Tamano exacto de la ISO, leido del manifiesto (setup-vm-web.mjs lo escribe y
+   build-custom-iso.sh lo actualiza con la ISO personalizada). v86 lo necesita
+   para pedir el fichero por rangos en vez de descargarlo de una sentada. */
+interface VmManifest {
+  bytes: number
+  alpine: string
+  custom: boolean
+  packages: string[]
+}
+async function fetchIsoInfo(): Promise<VmManifest> {
   const res = await fetch(MANIFEST_URL)
   if (!res.ok) throw new Error(`Falta el manifiesto de la VM (HTTP ${res.status})`)
-  const j = (await res.json()) as { isoBytes?: number; alpine?: string }
+  const j = (await res.json()) as {
+    isoBytes?: number
+    alpine?: string
+    custom?: boolean
+    packages?: string[]
+  }
   if (!j.isoBytes) throw new Error('El manifiesto no declara el tamaño de la ISO')
-  return { bytes: j.isoBytes, alpine: j.alpine ?? '3.24' }
+  return {
+    bytes: j.isoBytes,
+    alpine: j.alpine ?? '3.24',
+    custom: j.custom ?? false,
+    packages: j.packages ?? [],
+  }
 }
 
-/* Configuracion de red dentro de Alpine.
-
-   Lo que se sabe de verdad (medido con tools/test-vm-net2.mjs):
-   - virtio_net va COMPILADO en el kernel virt, no es un modulo. La interfaz
-     eth0 ya aparece sin tocar nada, asi que modprobe sobra y falla con
-     "module not found".
-   - El DHCP del relay necesita margen: con pocos intentos se queda sin IP y
-     el unico sintoma es "ping: Network unreachable" (no hay ruta).
-   - ping usa ICMP, que los relays no reenvian: para comprobar salida real
-     hay que mirar el lease de DHCP y probar con wget (TCP).
-
-   Los intervalos van holgados porque la VM emulada va lenta y el relay puede
-   estar ocupado. */
+/* Herramientas preinstaladas en la ISO personalizada (ver
+   tools/build-custom-iso.sh). La VM las instala desde el propio CD, sin red:
+   el visitante no descarga nada mas ni escribe ningun apk add. Si se arranca
+   la ISO base (dev local), la carpeta no existe y se omite en silencio. */
+const TOOLS_DIR = '/media/cdrom/extra-pkgs'
+/* --force-non-repository: el live no tiene disco, asi que apk avisa de que la
+   instalacion se perderia al reiniciar. Es justo nuestro modelo (efimero),
+   asi que se fuerza. Sin red: todo sale del CD. */
+const TOOLS_INSTALL = `ls ${TOOLS_DIR}/*.apk >/dev/null 2>&1 && apk add --allow-untrusted --force-non-repository --no-network ${TOOLS_DIR}/*.apk 2>&1 | tail -3 || echo TOOLS_SKIP`
 const NET_UP = 'ip link set eth0 up'
 const NET_DHCP = 'udhcpc -i eth0 -q -t 25 -T 5 -A 3'
 const NET_REPORT = 'ip -o addr show eth0 | tr -s " "; ip route'
@@ -118,8 +160,13 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
   const [error, setError] = useState<string | null>(null)
   const [alpineLabel, setAlpineLabel] = useState('3.24')
   const [elapsed, setElapsed] = useState(0)
-  const [netEnabled, setNetEnabled] = useState(false)
+  /* Internet viene activada por defecto: es lo que pide el laboratorio y el
+     relay se comprueba antes de arrancar. Se puede quitar para aislar la VM. */
+  const [netEnabled, setNetEnabled] = useState(true)
   const [netStatus, setNetStatus] = useState<NetStatus>('off')
+  const [relayOk, setRelayOk] = useState<boolean | null>(null)
+  const [toolsStatus, setToolsStatus] = useState<ToolsStatus>('unknown')
+  const [isoMB, setIsoMB] = useState(49)
 
   const termRef = useRef<HTMLDivElement>(null)
   const emulatorRef = useRef<V86Instance | null>(null)
@@ -146,6 +193,8 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
     setPhase('idle')
     setProgress(0)
     setNetStatus('off')
+    setToolsStatus('unknown')
+    setRelayOk(null)
   }, [])
 
   /* Al navegar a otra pagina con la VM viva, el WASM seguiria executing
@@ -163,10 +212,13 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
     setProgress(0)
     setError(null)
     setNetStatus(netEnabled ? 'pending' : 'off')
+    setToolsStatus('unknown')
+    setRelayOk(null)
 
     try {
-      const [mod] = await Promise.all([
+      const [mod, manifest] = await Promise.all([
         import('v86') as Promise<unknown>,
+        fetchIsoInfo(),
         loadScript('https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js'),
         loadCSS('https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css'),
       ])
@@ -176,12 +228,21 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
       if (!TerminalCtor) throw new Error('xterm.js no se pudo inicializar')
       if (!termRef.current) throw new Error('No se encontró el contenedor del terminal')
 
-      const { bytes, alpine } = await fetchIsoInfo()
+      const { bytes, alpine, custom } = manifest
       setAlpineLabel(alpine)
+      setIsoMB(Math.round(bytes / 1048576))
+
+      /* El relay se comprueba ANTES de crear el emulador: si no responde, se
+         arranca igual pero avisando, en vez de dejar un DHCP colgado. */
+      const relay = netEnabled ? await pickRelay() : { url: RELAYS[0], reachable: false }
+      setRelayOk(netEnabled ? relay.reachable : null)
 
       const emulator = new V86({
         wasm_path: WASM_URL,
-        memory_size: 64 * 1024 * 1024,
+        // 256 MB: el live + desempaquetar git/vim/man-pages necesitan margen.
+        // Con 128 MB el tmpfs se llenaba ("No space left", medido en pruebas)
+        // aunque al final funcionaba; con 256 la instalacion sale limpia.
+        memory_size: 256 * 1024 * 1024,
         vga_memory_size: 2 * 1024 * 1024,
         bios: { url: BIOS_URL },
         vga_bios: { url: VGA_BIOS_URL },
@@ -190,12 +251,10 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
         boot_order: 0x123, // 0x123 = CD antes que disco
         disable_speaker: true,
         disable_mouse: true,
-        /* Red opcional: sin relay el backend "inbrowser" deja la VM aislada.
-           Se enciende solo si el visitor lo pide, porque el trafico sale por
-           un relay de terceros (ver RELAY_URL). Alpine trae virtio_net, que
-           es justo el driver que necesita el tipo "virtio". */
+        /* Sin relay el backend "inbrowser" deja la VM aislada. Alpine trae
+           virtio_net compilado, que es justo el driver del tipo "virtio". */
         net_device: netEnabled
-          ? { type: 'virtio', relay_url: RELAY_URL }
+          ? { type: 'virtio', relay_url: relay.url }
           : { type: 'virtio', relay_url: 'inbrowser' },
         // El framebuffer de Alpine pasa a modo gráfico: el texto útil sale
         // por ttyS0, que se pinta en xterm. Sin canvas no se gasta CPU en VGA.
@@ -209,8 +268,8 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
 
       emulatorRef.current = emulator
 
-      /* 49 MB no se descargan de golpe: v86 pide rangos y emite progreso, que
-         es lo que evita que la pagina parezca colgada. */
+      /* La ISO son decenas de MB: v86 pide rangos y emite progreso, que es lo
+         que evita que la pagina parezca colgada. */
       const onProgress = (arg: unknown) => {
         const p = arg as { loaded?: number; total?: number }
         if (p?.total) setProgress(Math.round(((p.loaded ?? 0) / p.total) * 100))
@@ -219,10 +278,10 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
       emulator.add_listener('download-progress', onProgress)
       emulator.add_listener('emulator-started', onStarted)
 
-      /* Arranque automatizado: login como root y configuracion de red.
+      /* Arranque automatizado: login como root, red y herramientas.
 
          No se depende de un unico evento ni de un unico intento. El flujo se
-        -guioniza por reintentos porque la VM emulada va lenta y el relay puede
+         guioniza por reintentos porque la VM emulada va lenta y el relay puede
          estar ocupado: antes, un solo fallo dejaba la VM sin IP sin explicar
          nada. Ademas se lee la salida real para decir si ha funcionado. */
       let tail = ''
@@ -232,8 +291,11 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
 
       const onSerial = (v: unknown) => {
         if (typeof v === 'number') {
-          tail = (tail + String.fromCharCode(v)).slice(-400)
+          tail = (tail + String.fromCharCode(v)).slice(-600)
           if (/lease of \d+\.\d+\.\d+\.\d+ obtained/i.test(tail)) setNetStatus('ok')
+          if (/TOOLS_SKIP/i.test(tail)) setToolsStatus('missing')
+          else if (/\(\d+\/\d+\) Installing/i.test(tail)) setToolsStatus('installing')
+          else if (/OK: \d+ MiB in \d+ packages/i.test(tail)) setToolsStatus('ready')
         }
       }
       emulator.add_listener('serial0-output-byte', onSerial)
@@ -251,12 +313,25 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
         if (attempts < 3) later(70000, configureNet)
       }
 
+      /* Las herramientas vienen DENTRO de la ISO (extra-pkgs) y se instalan
+         desde el CD, sin red. Si la carpeta no existe (ISO base en dev), se
+         omite en silencio. */
+      const installTools = () => {
+        if (!custom) {
+          setToolsStatus('missing')
+          return
+        }
+        setToolsStatus('installing')
+        emulator.serial0_send(TOOLS_INSTALL + '\r')
+      }
+
       const autoLogin = setInterval(() => {
         if (entered || !/login:/i.test(tail)) return
         entered = true
         emulator.serial0_send('root\r')
-        // Margen generoso: en la VM emulada la consola va con retraso.
+        // Primero red (es lo que mas tarda en responder), luego herramientas.
         later(7000, configureNet)
+        later(20000, installTools)
       }, 400)
 
       cleanupRef.current = () => {
@@ -276,7 +351,7 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
       setError(e instanceof Error ? e.message : String(e))
       setPhase('error')
     }
-  }, [busy, running])
+  }, [busy, running, netEnabled])
 
   const statusText = {
     idle: 'Apagada',
@@ -343,16 +418,14 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
       </div>
 
       {/* Red — se decide ANTES de arrancar: v86 fija el backend al crear el
-          emulador, asi que cambiarla luego exigiria reiniciarlo. */}
+          emulador, asi que cambiarla luego exigiria reiniciarlo. Viene
+          activada por defecto porque el laboratorio se usa con internet. */}
       {!running && !busy && (
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-800 bg-ink-900/40 px-4 py-3">
           <input
             type="checkbox"
             checked={netEnabled}
             onChange={(e) => {
-              // Este control solo aparece con la VM parada (v86 fija el backend
-              // de red al crear el emulador), asi que no hay que avisar de nada
-              // mas al activarlo.
               setNetEnabled(e.target.checked)
               setNetStatus('off')
             }}
@@ -361,11 +434,28 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
           <span className="text-xs text-zinc-400">
             <span className="font-semibold text-zinc-300">Conectar internet a la VM</span>
             <br />
-            Al activarlo, el trafico de la maquina sale por un relay publico de terceros
+            El trafico sale por un relay publico de terceros
             (<span className="font-mono text-zinc-500">relay.widgetry.org</span>) con ancho de banda
-            limitado. No envies datos personales por aqui.
+            limitado. No envies datos personales por aqui. Sin marcar, la VM queda aislada.
           </span>
         </label>
+      )}
+
+      {running && relayOk === false && (
+        <p className="rounded-xl border border-amber-500/30 bg-amber-500/[0.07] px-4 py-3 text-xs text-amber-200">
+          El relay no respondia al arrancar: la red puede fallar. Si no sale IP, pulsa «Reintentar
+          conexión» o reinicia el laboratorio.
+        </p>
+      )}
+
+      {running && toolsStatus !== 'unknown' && toolsStatus !== 'missing' && (
+        <p className="text-xs text-zinc-500">
+          {toolsStatus === 'ready' ? (
+            <>Herramientas listas: <span className="font-mono text-zinc-400">vim nano zip tree htop curl git man</span> (vienen en la imagen).</>
+          ) : (
+            <>Instalando herramientas desde la imagen… (<span className="font-mono text-zinc-400">vim nano git…</span>)</>
+          )}
+        </p>
       )}
 
       {netEnabled && running && (
@@ -465,11 +555,12 @@ export default function VmBrowserLab({ compact = false }: { compact?: boolean })
             <div className="bg-[#0b0e14] px-4 py-10 text-center">
               <p className="font-mono text-sm text-zinc-400">VM apagada</p>
               <p className="mt-1 font-mono text-xs text-zinc-600">
-                Pulsa «Arrancar laboratorio» para descargarla (49 MB, solo la primera vez).
+                Pulsa «Arrancar laboratorio» para descargarla ({isoMB} MB, solo la primera vez).
               </p>
               {!compact && (
                 <p className="mt-3 text-xs text-zinc-500">
                   Entra como <span className="font-mono text-emerald-300">root</span> (sin contraseña).
+                  Trae <span className="font-mono text-zinc-400">vim nano zip tree htop curl git man</span> de serie.
                 </p>
               )}
             </div>

@@ -15,5 +15,7 @@ vm/runtime/
 .env.*
 
 # Recursos del laboratorio VM en el navegador (v86 + ISO de Alpine).
-# Son ~68 MB y los baja el build: node tools/setup-vm-web.mjs
+# No se versionan: los baja el build (`setup-vm-web`) y despues
+# `build-custom-iso.sh` inyecta los paquetes dentro de la ISO.
+# public/vm/ entero esta ignorado.
 public/vm/

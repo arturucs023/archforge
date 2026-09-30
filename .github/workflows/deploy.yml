@@ -37,11 +37,11 @@ jobs:
       - name: Setup browser VM assets
         run: npm run setup:vm-web
 
-      # Paquetes extra (nano, vim...) que la VM instala al arrancar. Se sirven
-      # desde el mismo origen que la pagina, asi que la VM los baja con el
-      # backend fetch de v86 sin CORS y sin relay de terceros.
-      - name: Setup browser VM packages
-        run: npm run setup:vm-pkgs
+      # ISO personalizada: inyecta nano, vim, git... DENTRO de la imagen para
+      # que la VM los instale desde el CD sin red. Si falla, se sigue con la
+      # ISO base (el propio script hace fallback, nunca rompe el deploy).
+      - name: Build custom Alpine ISO
+        run: bash tools/build-custom-iso.sh
 
       - name: Build
         run: npm run build
