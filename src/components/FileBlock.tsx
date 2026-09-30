@@ -12,14 +12,15 @@ export default function FileBlockView({ block }: { block: FileBlock }) {
       window.setTimeout(() => setCopied(false), 1600)
     }
   }
+  const contentLines = splitLines(block.content)
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-800 theme-dark-zone bg-[#0b0e14]">
+    <div className="group overflow-hidden rounded-xl border border-zinc-800 theme-dark-zone bg-[#0b0e14]">
       <div className="flex items-center gap-2 border-b border-zinc-800/80 bg-zinc-900/60 px-3 py-1.5">
         <span className="truncate font-mono text-xs text-zinc-300">{block.filename}</span>
         {block.note && <span className="hidden truncate text-[11px] text-zinc-500 sm:inline">· {block.note}</span>}
         <button
           onClick={copy}
-          className={`ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+          className={`af-copy ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
             copied
               ? 'border-emerald-500/50 text-emerald-300'
               : 'border-zinc-700 bg-zinc-800/70 text-zinc-300 hover:border-sky-500/50 hover:text-sky-300'
@@ -29,7 +30,18 @@ export default function FileBlockView({ block }: { block: FileBlock }) {
           {copied ? 'Copiado' : 'Copiar'}
         </button>
       </div>
-      <pre className="overflow-x-auto px-4 py-3 font-mono text-xs leading-6 text-zinc-300">{block.content}</pre>
+      <pre className="af-code overflow-x-auto px-4 py-3 font-mono text-xs leading-6 text-zinc-300">
+        {contentLines.map((ln, i) => (
+          <div key={i} className="af-line min-h-[1.5rem]">{ln}</div>
+        ))}
+      </pre>
     </div>
   )
+}
+
+function splitLines(content: string): string[] {
+  const parts = content.split('\n')
+  // Sin la última línea vacía de los ficheros que terminan en salto
+  if (parts.length > 1 && parts[parts.length - 1] === '') parts.pop()
+  return parts
 }

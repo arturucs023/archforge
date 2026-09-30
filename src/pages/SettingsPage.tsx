@@ -15,6 +15,7 @@ import { loadCursorMode, setCursorMode, CURSOR_STYLES, CURSOR_SIZES, CURSOR_SIZE
 import type { CursorMode, CursorSize, CursorStyle } from '../lib/cursor'
 import { applyAppearance, applyAccentSaturation, loadAppearance, saveAppearance, DEFAULT_APPEARANCE } from '../lib/appearance'
 import type { AppearanceConfig, BorderRadius, Density, FontWeight, PanelStyle, UiFont } from '../lib/appearance'
+import type { SidebarSide, SidebarWidth, SearchMode, HeaderStyle, CopyButtonMode, AnimationMode } from '../lib/appearance'
 import ProgressBar from '../components/ProgressBar'
 
 export default function SettingsPage() {
@@ -650,6 +651,149 @@ export default function SettingsPage() {
               <RotateCcw className="h-3 w-3" /> Fondo del tema
             </button>
           )}
+        </div>
+
+        {/* 6. Navegación y sidebar */}
+        <h3 className="mt-6 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+          🧭 Navegación y sidebar
+        </h3>
+        <p className="mb-1.5 text-xs text-zinc-500">Posición del sidebar</p>
+        <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Posición del sidebar">
+          {(
+            [
+              ['left', 'Izquierda', 'La actual'],
+              ['right', 'Derecha', 'Equilibra ultrawide'],
+            ] as [SidebarSide, string, string][]
+          ).map(([id, label, desc]) => (
+            <ChoiceCard
+              key={id}
+              groupLabel="Posición del sidebar"
+              label={label}
+              desc={desc}
+              active={appearance.sidebarSide === id}
+              onClick={() => updateAppearance({ sidebarSide: id })}
+            />
+          ))}
+        </div>
+        <p className="mt-3 mb-1.5 text-xs text-zinc-500">Ancho del sidebar</p>
+        <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Ancho del sidebar">
+          {(
+            [
+              ['narrow', 'Estrecho', 'Solo iconos'],
+              ['medium', 'Medio', 'Iconos + texto corto'],
+              ['wide', 'Ancho', 'Texto completo · actual'],
+            ] as [SidebarWidth, string, string][]
+          ).map(([id, label, desc]) => (
+            <ChoiceCard
+              key={id}
+              groupLabel="Ancho del sidebar"
+              label={label}
+              desc={desc}
+              active={appearance.sidebarWidth === id}
+              onClick={() => updateAppearance({ sidebarWidth: id })}
+            />
+          ))}
+        </div>
+
+        {/* 7. Búsqueda y cabecera */}
+        <h3 className="mt-6 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+          🔍 Búsqueda y cabecera
+        </h3>
+        <p className="mb-1.5 text-xs text-zinc-500">Barra de búsqueda</p>
+        <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Barra de búsqueda">
+          {(
+            [
+              ['always', 'Siempre visible', 'La actual'],
+              ['onscroll', 'Al subir scroll', 'Se oculta al bajar'],
+              ['shortcut', 'Solo Ctrl+K', 'Minimalismo extremo'],
+            ] as [SearchMode, string, string][]
+          ).map(([id, label, desc]) => (
+            <ChoiceCard
+              key={id}
+              groupLabel="Barra de búsqueda"
+              label={label}
+              desc={desc}
+              active={appearance.searchMode === id}
+              onClick={() => updateAppearance({ searchMode: id })}
+            />
+          ))}
+        </div>
+        <p className="mt-3 mb-1.5 text-xs text-zinc-500">Estilo de cabecera</p>
+        <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Estilo de cabecera">
+          {(
+            [
+              ['fixed', 'Fija', 'Siempre arriba · actual'],
+              ['floating', 'Flotante', 'Se esconde al bajar'],
+              ['integrated', 'Integrada', 'Sin fondo diferenciado'],
+            ] as [HeaderStyle, string, string][]
+          ).map(([id, label, desc]) => (
+            <ChoiceCard
+              key={id}
+              groupLabel="Estilo de cabecera"
+              label={label}
+              desc={desc}
+              active={appearance.headerStyle === id}
+              onClick={() => updateAppearance({ headerStyle: id })}
+            />
+          ))}
+        </div>
+
+        {/* 8. Bloques de código */}
+        <h3 className="mt-6 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+          💻 Bloques de código
+        </h3>
+        <p className="mb-1.5 text-xs text-zinc-500">Botón de copiar</p>
+        <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Botón de copiar">
+          {(
+            [
+              ['always', 'Siempre', 'El actual'],
+              ['hover', 'Al pasar el ratón', 'Menos ruido visual'],
+              ['hidden', 'Oculto', 'Usa Ctrl+C manual'],
+            ] as [CopyButtonMode, string, string][]
+          ).map(([id, label, desc]) => (
+            <ChoiceCard
+              key={id}
+              groupLabel="Botón de copiar"
+              label={label}
+              desc={desc}
+              active={appearance.copyBtn === id}
+              onClick={() => updateAppearance({ copyBtn: id })}
+            />
+          ))}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-3">
+          <CheckOpt checked={appearance.lineNumbers} onChange={(v) => updateAppearance({ lineNumbers: v })}>
+            🔢 Numeración de líneas
+          </CheckOpt>
+        </div>
+
+        {/* 9. Interacciones */}
+        <h3 className="mt-6 mb-2 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+          🎮 Interacciones
+        </h3>
+        <p className="mb-1.5 text-xs text-zinc-500">Animaciones de transición</p>
+        <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Animaciones de transición">
+          {(
+            [
+              ['fast', 'Rápidas', 'Todo a 120ms'],
+              ['smooth', 'Suaves', 'Las actuales'],
+              ['none', 'Ninguna', 'Instantáneo'],
+            ] as [AnimationMode, string, string][]
+          ).map(([id, label, desc]) => (
+            <ChoiceCard
+              key={id}
+              groupLabel="Animaciones de transición"
+              label={label}
+              desc={desc}
+              active={appearance.animation === id}
+              onClick={() => updateAppearance({ animation: id })}
+            />
+          ))}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-3">
+          <CheckOpt checked={appearance.ripple} onChange={(v) => updateAppearance({ ripple: v })}>
+            💧 Ondulación al clicar
+          </CheckOpt>
         </div>
 
         <button

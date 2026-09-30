@@ -20,7 +20,7 @@ function CopyButton({ getText, label = true, className }: { getText: () => strin
     <button
       onClick={handleCopy}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-800/70 px-2.5 py-1 text-xs font-medium text-zinc-300 transition-colors hover:border-sky-500/50 hover:text-sky-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400',
+        'af-copy inline-flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-800/70 px-2.5 py-1 text-xs font-medium text-zinc-300 transition-colors hover:border-sky-500/50 hover:text-sky-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400',
         copied && 'border-emerald-500/50 text-emerald-300',
         className,
       )}
@@ -43,7 +43,7 @@ export default function CommandBlock({ block }: { block: CommandBlockT }) {
   return (
     <div
       className={cn(
-        'theme-dark-zone overflow-hidden rounded-xl border bg-[#0b0e14]',
+        'group theme-dark-zone overflow-hidden rounded-xl border bg-[#0b0e14]',
         block.dangerous ? 'border-rose-600/40' : 'border-zinc-800',
       )}
     >
@@ -80,12 +80,12 @@ export default function CommandBlock({ block }: { block: CommandBlockT }) {
           </button>
         </div>
       ) : (
-        <pre className="overflow-x-auto px-3 py-3 font-mono text-[13px] leading-6">
+        <pre className="af-code overflow-x-auto px-3 py-3 font-mono text-[13px] leading-6">
           {block.lines.map((line, i) => {
             const d = displayLine(line, shellMode)
             if (!d) return null
             return (
-              <div key={i} className="group/line relative flex whitespace-pre">
+              <div key={i} className="af-line group/line relative flex whitespace-pre">
                 {/* El prefijo es un elemento visual SEPARADO: nunca forma parte del texto copiado */}
                 <span className="select-none pr-2 font-semibold text-emerald-400/90">{d.prefix}</span>
                 <code className={cn('min-w-0 break-all', d.comment ? 'italic text-zinc-500' : shellMode === 'root' && isRootRequired(line) ? 'text-amber-100' : 'text-zinc-200')}>

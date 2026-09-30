@@ -5,6 +5,7 @@ import Topbar from './Topbar'
 import SearchModal from './SearchModal'
 import { useRoute } from '../lib/router'
 import { useApp } from '../context/AppContext'
+import { useAppearance } from '../lib/appearance'
 import { cn } from '../lib/utils'
 
 const LABELS: Record<string, string> = {
@@ -42,6 +43,7 @@ const SB_HIDDEN_KEY = 'archforge:sidebar-hidden'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const appearance = useAppearance()
   /** escritorio: ¿barra lateral plegada? persiste en localStorage */
   const [desktopHidden, setDesktopHidden] = useState<boolean>(() => {
     try { return localStorage.getItem(SB_HIDDEN_KEY) === '1' } catch { return false }
@@ -82,7 +84,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         style={{ background: 'radial-gradient(640px 220px at 22% -10%, rgba(56,189,248,0.07), transparent)' }}
       />
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} hidden={desktopHidden} onToggle={toggleSidebar} />
-      <div className={cn('relative z-10 transition-[padding] duration-200', !desktopHidden && 'lg:pl-72')}>
+      <div className={cn('relative z-10 transition-[padding] duration-200', contentPad(desktopHidden, appearance.sidebarSide, appearance.sidebarWidth))}>
         <Topbar onMenu={() => { desktopHidden ? toggleSidebar() : setMenuOpen(true) }} showOnDesktop={desktopHidden} />
         <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-10 lg:py-8">{children}</main>        <footer className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 text-center text-xs leading-relaxed text-zinc-600 sm:px-6 lg:px-10">
           ArchForge · guía educativa independiente · no afiliada a Arch Linux™ · los procedimientos pueden cambiar con el tiempo:
@@ -93,6 +95,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <ScrollTopButton />
     </div>
   )
+}
+
+/** Padding del contenido según lado y ancho del sidebar. OJO: clases literales
+    completas (Tailwind solo genera las que ve escritas en el código). */
+const CONTENT_PAD: Record<string, string> = {
+  'left-narrow': 'lg:pl-[4.25rem]',
+  'left-medium': 'lg:pl-56',
+  'left-wide': 'lg:pl-72',
+  'right-narrow': 'lg:pr-[4.25rem]',
+  'right-medium': 'lg:pr-56',
+  'right-wide': 'lg:pr-72',
+}
+
+function contentPad(hidden: boolean, side: 'left' | 'right', width: 'narrow' | 'medium' | 'wide'): string {
+  if (hidden) return ''
+  return CONTENT_PAD[`${side}-${width}`] ?? 'lg:pl-72'
 }
 
 /** Botón flotante «volver arriba»: aparece tras desplazarse y respeta reduced-motion. */

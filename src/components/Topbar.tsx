@@ -4,16 +4,58 @@ import { useApp } from '../context/AppContext'
 import { LEVEL_LABEL } from '../types'
 import type { Level } from '../types'
 import { navigate, useRoute } from '../lib/router'
+import { useAppearance } from '../lib/appearance'
 import { cn } from '../lib/utils'
 import Tooltip from './Tooltip'
+
+/** Dirección del scroll: para cabecera flotante y búsqueda al subir. */
+function useScrollDir(): { dir: 'up' | 'down'; atTop: boolean } {
+  const [dir, setDir] = useState<'up' | 'down'>('up')
+  const [atTop, setAtTop] = useState(true)
+  useEffect(() => {
+    let last = window.scrollY
+    let ticking = false
+    const onScroll = (): void => {
+      if (ticking) return
+      ticking = true
+      window.requestAnimationFrame(() => {
+        const y = window.scrollY
+        setAtTop(y < 8)
+        setDir(y < last || y < 8 ? 'up' : 'down')
+        last = y
+        ticking = false
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  return { dir, atTop }
+}
 
 export default function Topbar({ onMenu, showOnDesktop = false }: { onMenu: () => void; showOnDesktop?: boolean }) {
   const { shellMode, setShellMode, level, setLevel, setSearchOpen } = useApp()
   const route = useRoute()
+  const appearance = useAppearance()
+  const { dir, atTop } = useScrollDir()
   const settingsActive = route.segments[0] === 'settings'
 
+  const hideOnScroll = dir === 'down' && !atTop
+  /* Cabecera flotante: se esconde al bajar. Integrada: sin fondo ni borde. */
+  const hideHeader = appearance.headerStyle === 'floating' && hideOnScroll
+  const showSearch = appearance.searchMode === 'always' ||
+    (appearance.searchMode === 'onscroll' && !hideOnScroll)
+
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-zinc-800/80 bg-ink-950/85 px-3 backdrop-blur-md sm:px-5">
+    <header
+      className={cn(
+        'sticky top-0 z-20 flex h-14 items-center gap-2 px-3 sm:px-5',
+        appearance.headerStyle === 'integrated'
+          ? 'border-b border-transparent'
+          : 'border-b border-zinc-800/80 bg-ink-950/85 backdrop-blur-md',
+        appearance.headerStyle === 'floating' && 'transition-transform duration-200',
+        hideHeader && '-translate-y-full',
+      )}
+    >
       <button
         onClick={onMenu}
         className={cn('rounded-lg border border-zinc-800 p-2 text-zinc-400 transition-colors hover:text-zinc-200', !showOnDesktop && 'lg:hidden')}
@@ -39,17 +81,19 @@ export default function Topbar({ onMenu, showOnDesktop = false }: { onMenu: () =
         </button>
       )}
 
-      {/* Búsqueda global */}
-      <button
-        onClick={() => setSearchOpen(true)}
-        className="group flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-zinc-800 bg-ink-850 px-3 text-left text-sm text-zinc-500 transition-colors hover:border-zinc-600 sm:max-w-md"
-      >
-        <Search className="h-4 w-4 shrink-0" />
-        <span className="truncate">Buscar comandos, problemas, conceptos…</span>
-        <kbd className="ml-auto hidden shrink-0 rounded border border-zinc-700 bg-zinc-800/70 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400 sm:inline">
-          Ctrl K
-        </kbd>
-      </button>
+      {/* Búsqueda global (ocultable desde Ajustes → Interfaz; Ctrl+K siempre funciona) */}
+      {showSearch && (
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="group flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-zinc-800 bg-ink-850 px-3 text-left text-sm text-zinc-500 transition-colors hover:border-zinc-600 sm:max-w-md"
+        >
+          <Search className="h-4 w-4 shrink-0" />
+          <span className="truncate">Buscar comandos, problemas, conceptos…</span>
+          <kbd className="ml-auto hidden shrink-0 rounded border border-zinc-700 bg-zinc-800/70 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400 sm:inline">
+            Ctrl K
+          </kbd>
+        </button>
+      )}
 
       <div className="ml-auto flex items-center gap-2">
         {/* Racha de aprendizaje (solo si ya hay actividad) */}

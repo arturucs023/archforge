@@ -484,3 +484,80 @@ html[data-af-font='roboto'] body {
 html[data-af-weight='semibold'] body {
   font-weight: 500;
 }
+
+/* ---- 5. Botón de copiar en bloques de código ----
+   .af-copy marca los botones de copiar de CommandBlock/FileBlock.
+   always = sin reglas (visible). hover = solo con el ratón encima del bloque
+   (.group en el contenedor). hidden = fuera (sigue Ctrl+C manual). */
+html[data-af-copy='hover'] .af-copy {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+html[data-af-copy='hover'] .group:hover .af-copy,
+html[data-af-copy='hover'] .af-copy:hover,
+html[data-af-copy='hover'] .af-copy:focus-visible {
+  opacity: 1;
+}
+html[data-af-copy='hidden'] .af-copy {
+  display: none;
+}
+
+/* ---- 6. Numeración de líneas ----
+   pre.af-code con hijos div.af-line: canaleta con contador CSS. */
+html[data-af-linenums='on'] pre.af-code {
+  counter-reset: afline;
+}
+html[data-af-linenums='on'] pre.af-code > div.af-line {
+  counter-increment: afline;
+}
+html[data-af-linenums='on'] pre.af-code > div.af-line::before {
+  content: counter(afline);
+  flex-shrink: 0;
+  width: 2.5ch;
+  margin-right: 0.75rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--af-zinc-600));
+  user-select: none;
+}
+
+/* ---- 7. Animaciones ----
+   none = duraciones ~cero (no `none` seco: así siguen disparándose los
+   eventos animationend de los que depende el arranque). */
+html[data-af-anim='none'] *,
+html[data-af-anim='none'] *::before,
+html[data-af-anim='none'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+html[data-af-anim='fast'] *,
+html[data-af-anim='fast'] *::before,
+html[data-af-anim='fast'] *::after {
+  animation-duration: 120ms !important;
+  transition-duration: 120ms !important;
+}
+
+/* ---- 8. Ripple al clicar ----
+   El span lo inyecta la delegación global (src/lib/appearance.ts). */
+.af-ripple {
+  position: absolute;
+  border-radius: 9999px;
+  transform: scale(0);
+  background: currentColor;
+  opacity: 0.22;
+  pointer-events: none;
+  animation: afRipple 0.45s ease-out forwards;
+}
+@keyframes afRipple {
+  to {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .af-ripple {
+    animation: none;
+    opacity: 0;
+  }
+}

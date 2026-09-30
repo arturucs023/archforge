@@ -6,6 +6,7 @@
    en <html>. Los valores por defecto NO generan overrides: la app se ve
    exactamente igual que sin este módulo. */
 
+import { useEffect, useState } from 'react'
 import { getAccent, loadAccent } from './accent'
 
 export type BorderRadius = 'square' | 'soft' | 'round'
@@ -13,6 +14,12 @@ export type PanelStyle = 'flat' | 'bordered' | 'card'
 export type Density = 'compact' | 'comfortable' | 'spacious'
 export type UiFont = 'default' | 'inter' | 'system' | 'roboto'
 export type FontWeight = 'normal' | 'semibold'
+export type SidebarSide = 'left' | 'right'
+export type SidebarWidth = 'narrow' | 'medium' | 'wide'
+export type SearchMode = 'always' | 'onscroll' | 'shortcut'
+export type HeaderStyle = 'fixed' | 'floating' | 'integrated'
+export type CopyButtonMode = 'always' | 'hover' | 'hidden'
+export type AnimationMode = 'fast' | 'smooth' | 'none'
 
 export interface AppearanceConfig {
   radius: BorderRadius
@@ -30,6 +37,14 @@ export interface AppearanceConfig {
   saturation: number
   /** tono de fondo propio en hex (#0d1526) o null = el del tema */
   bgCustom: string | null
+  sidebarSide: SidebarSide
+  sidebarWidth: SidebarWidth
+  searchMode: SearchMode
+  headerStyle: HeaderStyle
+  copyBtn: CopyButtonMode
+  lineNumbers: boolean
+  animation: AnimationMode
+  ripple: boolean
 }
 
 export const APPEARANCE_KEY = 'archforge:appearance'
@@ -46,6 +61,14 @@ export const DEFAULT_APPEARANCE: AppearanceConfig = {
   noise: false,
   saturation: 100,
   bgCustom: null,
+  sidebarSide: 'left',
+  sidebarWidth: 'wide',
+  searchMode: 'always',
+  headerStyle: 'fixed',
+  copyBtn: 'always',
+  lineNumbers: false,
+  animation: 'smooth',
+  ripple: false,
 }
 
 const RADIUS: BorderRadius[] = ['square', 'soft', 'round']
@@ -53,6 +76,12 @@ const PANELS: PanelStyle[] = ['flat', 'bordered', 'card']
 const DENSITIES: Density[] = ['compact', 'comfortable', 'spacious']
 const FONTS: UiFont[] = ['default', 'inter', 'system', 'roboto']
 const WEIGHTS: FontWeight[] = ['normal', 'semibold']
+const SIDES: SidebarSide[] = ['left', 'right']
+const SB_WIDTHS: SidebarWidth[] = ['narrow', 'medium', 'wide']
+const SEARCH_MODES: SearchMode[] = ['always', 'onscroll', 'shortcut']
+const HEADER_STYLES: HeaderStyle[] = ['fixed', 'floating', 'integrated']
+const COPY_BTNS: CopyButtonMode[] = ['always', 'hover', 'hidden']
+const ANIMATIONS: AnimationMode[] = ['fast', 'smooth', 'none']
 
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n))
@@ -75,6 +104,14 @@ export function loadAppearance(): AppearanceConfig {
         noise: typeof p.noise === 'boolean' ? p.noise : DEFAULT_APPEARANCE.noise,
         saturation: typeof p.saturation === 'number' ? clamp(Math.round(p.saturation), 0, 150) : DEFAULT_APPEARANCE.saturation,
         bgCustom: typeof p.bgCustom === 'string' && /^#[0-9a-fA-F]{6}$/.test(p.bgCustom) ? p.bgCustom : null,
+        sidebarSide: SIDES.includes(p.sidebarSide as SidebarSide) ? (p.sidebarSide as SidebarSide) : DEFAULT_APPEARANCE.sidebarSide,
+        sidebarWidth: SB_WIDTHS.includes(p.sidebarWidth as SidebarWidth) ? (p.sidebarWidth as SidebarWidth) : DEFAULT_APPEARANCE.sidebarWidth,
+        searchMode: SEARCH_MODES.includes(p.searchMode as SearchMode) ? (p.searchMode as SearchMode) : DEFAULT_APPEARANCE.searchMode,
+        headerStyle: HEADER_STYLES.includes(p.headerStyle as HeaderStyle) ? (p.headerStyle as HeaderStyle) : DEFAULT_APPEARANCE.headerStyle,
+        copyBtn: COPY_BTNS.includes(p.copyBtn as CopyButtonMode) ? (p.copyBtn as CopyButtonMode) : DEFAULT_APPEARANCE.copyBtn,
+        lineNumbers: typeof p.lineNumbers === 'boolean' ? p.lineNumbers : DEFAULT_APPEARANCE.lineNumbers,
+        animation: ANIMATIONS.includes(p.animation as AnimationMode) ? (p.animation as AnimationMode) : DEFAULT_APPEARANCE.animation,
+        ripple: typeof p.ripple === 'boolean' ? p.ripple : DEFAULT_APPEARANCE.ripple,
       }
     }
   } catch { /* almacenamiento bloqueado o corrupto */ }
@@ -192,6 +229,14 @@ export function applyAppearance(cfg: AppearanceConfig): void {
   root.dataset.afWeight = cfg.weight
   root.dataset.afGlass = cfg.glass ? 'on' : 'off'
   root.dataset.afNoise = cfg.noise ? 'on' : 'off'
+  root.dataset.afSbside = cfg.sidebarSide
+  root.dataset.afSbwidth = cfg.sidebarWidth
+  root.dataset.afSearch = cfg.searchMode
+  root.dataset.afHeader = cfg.headerStyle
+  root.dataset.afCopy = cfg.copyBtn
+  root.dataset.afLinenums = cfg.lineNumbers ? 'on' : 'off'
+  root.dataset.afAnim = cfg.animation
+  root.dataset.afRipple = cfg.ripple ? 'on' : 'off'
   root.style.setProperty('--af-glass-alpha', (cfg.glassAlpha / 100).toFixed(2))
   root.style.setProperty('--af-sidebar-alpha', (cfg.sidebarAlpha / 100).toFixed(2))
 
@@ -210,6 +255,9 @@ export function applyAppearance(cfg: AppearanceConfig): void {
     root.style.removeProperty('--af-ink-900')
     root.style.removeProperty('--af-ink-850')
   }
+
+  setRippleEnabled(cfg.ripple)
+  notifyAppearanceChanged()
 }
 
 /** Arranque de la app */
@@ -217,4 +265,66 @@ export function initAppearance(): AppearanceConfig {
   const cfg = loadAppearance()
   applyAppearance(cfg)
   return cfg
+}
+
+/* ── Reactividad ────────────────────────────────
+   Los componentes que dependen de la apariencia (sidebar, topbar, layout)
+   se suscriben con useAppearance() y se re-renderizan al cambiarla. */
+
+const APPEARANCE_EVENT = 'archforge:appearance-changed'
+
+function notifyAppearanceChanged(): void {
+  try {
+    window.dispatchEvent(new CustomEvent(APPEARANCE_EVENT))
+  } catch { /* sin window (tests) */ }
+}
+
+/** Lee la config actual y se actualiza sola cuando cambia en Ajustes. */
+export function useAppearance(): AppearanceConfig {
+  const [cfg, setCfg] = useState<AppearanceConfig>(() => loadAppearance())
+  useEffect(() => {
+    const onChange = (): void => setCfg(loadAppearance())
+    window.addEventListener(APPEARANCE_EVENT, onChange)
+    return () => window.removeEventListener(APPEARANCE_EVENT, onChange)
+  }, [])
+  return cfg
+}
+
+/* ── Ripple ─────────────────────────────────────
+   Ondulación táctil al clicar (delegación global, sin tocar componentes).
+   Se enchufa/desenshufa en applyAppearance según la preferencia. */
+
+let rippleHandler: ((e: MouseEvent) => void) | null = null
+
+function onRippleClick(e: MouseEvent): void {
+  if (e.button !== 0) return
+  const t = e.target as HTMLElement | null
+  const host = t?.closest?.('button, a[href], [role="button"]') as HTMLElement | null
+  if (!host || host.hasAttribute('disabled') || host.getAttribute('aria-disabled') === 'true') return
+  const rect = host.getBoundingClientRect()
+  if (rect.width === 0 || rect.height === 0) return
+  try {
+    if (window.getComputedStyle(host).position === 'static') host.style.position = 'relative'
+  } catch { /* noop */ }
+  const size = Math.max(rect.width, rect.height) * 1.1
+  const s = document.createElement('span')
+  s.className = 'af-ripple'
+  s.setAttribute('aria-hidden', 'true')
+  s.style.width = `${size}px`
+  s.style.height = `${size}px`
+  s.style.left = `${e.clientX - rect.left - size / 2}px`
+  s.style.top = `${e.clientY - rect.top - size / 2}px`
+  host.appendChild(s)
+  window.setTimeout(() => s.remove(), 500)
+}
+
+function setRippleEnabled(on: boolean): void {
+  if (typeof document === 'undefined' || typeof document.addEventListener !== 'function') return
+  if (on && rippleHandler === null) {
+    rippleHandler = onRippleClick
+    document.addEventListener('click', rippleHandler)
+  } else if (!on && rippleHandler !== null) {
+    document.removeEventListener('click', rippleHandler)
+    rippleHandler = null
+  }
 }
