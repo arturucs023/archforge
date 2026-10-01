@@ -238,8 +238,13 @@ export default function SearchModal() {
   }, [query, entries])
 
   /* Si la consulta ES una URL, se ofrece abrirla fuera (vía proxy si toca).
-     Fila extra en la posición 0: la navegación por teclado la tiene en cuenta. */
-  const urlTarget = /^https?:\/\/\S+$/i.test(query.trim()) ? query.trim() : null
+     Fila extra en la posición 0: la navegación por teclado la tiene en cuenta.
+     Detecta con esquema (https://…) o sin él (dominio.tld, IPs, localhost):
+     sin esquema se asume https://. Las palabras sueltas sin punto ("nginx")
+     o con espacios ("no tengo internet") NO son URLs y no generan fila. */
+  const trimmedQuery = query.trim()
+  const urlMatch = /^(https?:\/\/)?(localhost(:\d+)?(\/\S*)?|[\w-]+(\.[\w-]+)+(:\d+)?(\/\S*)?)$/i.exec(trimmedQuery)
+  const urlTarget = urlMatch ? (urlMatch[1] ? trimmedQuery : `https://${trimmedQuery}`) : null
   const proxyHint = urlTarget && isProxyActive() ? 'vía proxy' : 'pestaña nueva'
   const totalRows = results.length + (urlTarget ? 1 : 0)
 
@@ -283,7 +288,7 @@ export default function SearchModal() {
                 else go()
               }
             }}
-            placeholder="p. ej. mkfs.btrfs, no tengo internet, ext4 vs btrfs…"
+            placeholder="p. ej. mkfs.btrfs, no tengo internet… o pega una URL"
             className="h-12 w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-600 outline-none"
           />
           <kbd className="hidden shrink-0 rounded border border-zinc-700 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500 sm:inline">ESC</kbd>
