@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight, BookOpen, Bug, Command as CommandIcon, FlaskConical, Scale, Search, Server, SquareTerminal, Terminal, Activity } from 'lucide-react'
+import { ArrowRight, BookOpen, Bug, Command as CommandIcon, FlaskConical, Globe, Scale, Search, Server, SquareTerminal, Terminal, Activity } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { navigate } from '../lib/router'
+import { isProxyActive, openExternal } from '../lib/proxy'
 import { cn } from '../lib/utils'
 import { REGISTRY } from '../data/registry'
 import { COMPARISONS } from '../data/comparisons'
@@ -236,7 +237,13 @@ export default function SearchModal() {
       .map((r) => r.e)
   }, [query, entries])
 
-  useEffect(() => setSelected(0), [results.length])
+  /* Si la consulta ES una URL, se ofrece abrirla fuera (vía proxy si toca).
+     Fila extra en la posición 0: la navegación por teclado la tiene en cuenta. */
+  const urlTarget = /^https?:\/\/\S+$/i.test(query.trim()) ? query.trim() : null
+  const proxyHint = urlTarget && isProxyActive() ? 'vía proxy' : 'pestaña nueva'
+  const totalRows = results.length + (urlTarget ? 1 : 0)
+
+  useEffect(() => setSelected(0), [results.length, urlTarget])
 
   useEffect(() => {
     const el = listRef.current?.children[selected] as HTMLElement | undefined
@@ -246,10 +253,16 @@ export default function SearchModal() {
   if (!searchOpen) return null
 
   const go = (e?: Entry) => {
-    const target = e ?? results[selected]
+    const target = e ?? results[selected - (urlTarget ? 1 : 0)]
     if (!target) return
     setSearchOpen(false)
     navigate(target.to)
+  }
+
+  const goExternal = () => {
+    if (!urlTarget) return
+    setSearchOpen(false)
+    openExternal(urlTarget)
   }
 
   return (
@@ -263,9 +276,12 @@ export default function SearchModal() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'ArrowDown') { e.preventDefault(); setSelected((s) => Math.min(s + 1, results.length - 1)) }
+              if (e.key === 'ArrowDown') { e.preventDefault(); setSelected((s) => Math.min(s + 1, totalRows - 1)) }
               if (e.key === 'ArrowUp') { e.preventDefault(); setSelected((s) => Math.max(s - 1, 0)) }
-              if (e.key === 'Enter') go()
+              if (e.key === 'Enter') {
+                if (urlTarget && selected === 0) goExternal()
+                else go()
+              }
             }}
             placeholder="p. ej. mkfs.btrfs, no tengo internet, ext4 vs btrfs…"
             className="h-12 w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-600 outline-none"
@@ -280,20 +296,39 @@ export default function SearchModal() {
               (<code className="font-mono text-zinc-400">no tengo audio</code>), comparativas y conceptos.
             </div>
           )}
-          {query && results.length === 0 && (
+          {query && results.length === 0 && !urlTarget && (
             <div className="px-3 py-8 text-center text-sm text-zinc-500">Sin resultados para «{query}».</div>
           )}
+          {urlTarget && (
+            <button
+              onClick={goExternal}
+              onMouseEnter={() => setSelected(0)}
+              className={cn(
+                'flex w-full items-start gap-3 rounded-lg px-3 py-2 text-left transition-colors',
+                selected === 0 ? 'bg-sky-500/10' : '',
+              )}
+            >
+              <Globe className="mt-0.5 h-4 w-4 shrink-0 text-sky-400" aria-hidden />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm text-zinc-200">Abrir URL externa</span>
+                <span className="block truncate font-mono text-xs text-zinc-500">{urlTarget}</span>
+              </span>
+              <span className="shrink-0 pt-0.5 font-mono text-[10px] uppercase tracking-wider text-sky-400">{proxyHint}</span>
+              {selected === 0 && <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-sky-400" />}
+            </button>
+          )}
           {results.map((r, i) => {
+            const idx = i + (urlTarget ? 1 : 0)
             const meta = TYPE_META[r.type]
             const Icon = meta.icon
             return (
               <button
                 key={`${r.type}-${r.title}-${i}`}
                 onClick={() => go(r)}
-                onMouseEnter={() => setSelected(i)}
+                onMouseEnter={() => setSelected(idx)}
                 className={cn(
                   'flex w-full items-start gap-3 rounded-lg px-3 py-2 text-left transition-colors',
-                  i === selected ? 'bg-sky-500/10' : '',
+                  idx === selected ? 'bg-sky-500/10' : '',
                 )}
               >
                 <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', meta.color)} aria-hidden />
@@ -302,7 +337,7 @@ export default function SearchModal() {
                   <span className="block truncate text-xs text-zinc-500">{r.subtitle}</span>
                 </span>
                 <span className={cn('shrink-0 pt-0.5 font-mono text-[10px] uppercase tracking-wider', meta.color)}>{meta.label}</span>
-                {i === selected && <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-sky-400" />}
+                {idx === selected && <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-sky-400" />}
               </button>
             )
           })}

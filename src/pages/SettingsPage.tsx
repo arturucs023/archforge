@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react'
-import { Check, Download, Info, Moon, Palette, RotateCcw, Save, SlidersHorizontal, Sun, Trash2, Upload } from 'lucide-react'
+import { Check, Download, Info, Link2, Moon, Palette, RotateCcw, Save, SlidersHorizontal, Sun, Trash2, Upload } from 'lucide-react'
 import { Monitor } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import Breadcrumbs, { PageHeader } from '../components/Breadcrumbs'
 import { LEVEL_LABEL, LEVEL_RANK } from '../types'
 import type { Level } from '../types'
 import { download, cn } from '../lib/utils'
+import { resolveExternalUrl } from '../lib/proxy'
 import { ACCENTS, applyAccent, DEFAULT_ACCENT, loadAccent, saveAccent } from '../lib/accent'
 import type { AccentId } from '../lib/accent'
 import { loadTheme, setTheme } from '../lib/theme'
@@ -15,6 +16,8 @@ import { loadCursorMode, setCursorMode, CURSOR_STYLES, CURSOR_SIZES, CURSOR_SIZE
 import type { CursorMode, CursorSize, CursorStyle } from '../lib/cursor'
 import { applyAppearance, applyAccentSaturation, loadAppearance, saveAppearance, DEFAULT_APPEARANCE } from '../lib/appearance'
 import type { AppearanceConfig, BorderRadius, Density, FontWeight, PanelStyle, UiFont } from '../lib/appearance'
+import { isProxyActive, loadProxyConfig, saveProxyConfig } from '../lib/proxy'
+import type { ProxyConfig } from '../lib/proxy'
 import type { SidebarSide, SidebarWidth, SearchMode, HeaderStyle, CopyButtonMode, AnimationMode } from '../lib/appearance'
 import ProgressBar from '../components/ProgressBar'
 
@@ -31,6 +34,16 @@ export default function SettingsPage() {
   const [cursorOutline, setCursorOutlineState] = useState(() => loadCursorOutline())
   const [cursorColor, setCursorColorState] = useState<string | null>(() => loadCursorColor())
   const [appearance, setAppearanceState] = useState<AppearanceConfig>(() => loadAppearance())
+  const [proxyCfg, setProxyCfg] = useState<ProxyConfig>(() => loadProxyConfig())
+  const proxyActive = isProxyActive(proxyCfg)
+
+  const updateProxy = (patch: Partial<ProxyConfig>) => {
+    setProxyCfg((prev) => {
+      const next = { ...prev, ...patch }
+      saveProxyConfig(next)
+      return next
+    })
+  }
 
   const updateAppearance = (patch: Partial<AppearanceConfig>) => {
     setAppearanceState((prev) => {
@@ -808,6 +821,56 @@ export default function SettingsPage() {
       </section>
 
       <section className="mt-5 rounded-2xl border border-zinc-800 bg-ink-900/70 p-5 sm:p-6">
+        <h2 className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">
+          <Link2 className="h-4 w-4 text-sky-400" /> Navegación Avanzada · 🔗 Proxy externo
+        </h2>
+        <p className="mt-1 mb-4 max-w-3xl text-sm leading-relaxed text-zinc-400">
+          Abre los enlaces externos (wiki, URLs pegadas en el buscador) a través de tu propio proxy.
+          Sin configurar, todo navega directo como hasta ahora.
+        </p>
+
+        <label htmlFor="proxy-base-url" className="mb-1.5 block text-xs text-zinc-500">
+          URL Base de Proxy
+        </label>
+        <input
+          id="proxy-base-url"
+          type="url"
+          inputMode="url"
+          autoComplete="off"
+          spellCheck={false}
+          placeholder="https://mi-proxy.com/browse?url="
+          value={proxyCfg.baseUrl}
+          onChange={(e) => updateProxy({ baseUrl: e.target.value })}
+          className="w-full max-w-xl rounded-lg border border-zinc-800 bg-ink-950 px-3 py-2 font-mono text-xs text-zinc-200 outline-none transition-colors placeholder:text-zinc-600 focus:border-sky-500/50"
+        />
+        <p className="mt-1.5 max-w-xl text-xs leading-relaxed text-zinc-500">
+          Para entornos con restricciones de red. Debes proporcionar tu propio endpoint válido;
+          ArchForge no incluye ningún proxy. La URL de destino se concatena al final de esta base.
+        </p>
+
+        <div className="mt-3 flex flex-wrap gap-3">
+          <CheckOpt checked={proxyCfg.enabled} onChange={(v) => updateProxy({ enabled: v })}>
+            🌐 Usar Proxy para URLs externas
+          </CheckOpt>
+        </div>
+
+        <p className="mt-3 flex items-center gap-2 font-mono text-xs">
+          <span
+            aria-hidden
+            className={cn(
+              'inline-block h-2.5 w-2.5 rounded-full',
+              proxyActive ? 'bg-emerald-500' : 'bg-zinc-600',
+            )}
+          />
+          <span className="text-zinc-300">
+            {proxyActive
+              ? `Vía proxy: ${proxyCfg.baseUrl.trim()}…`
+              : 'Navegación directa (sin proxy)'}
+          </span>
+        </p>
+      </section>
+
+      <section className="mt-5 rounded-2xl border border-zinc-800 bg-ink-900/70 p-5 sm:p-6">
         <h2 className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">Modo de comandos por defecto</h2>
         <p className="mt-1 mb-4 max-w-3xl text-sm leading-relaxed text-zinc-400">
           Afecta a todos los bloques de comandos de la app. El prefijo ($ o #) es solo visual: al copiar nunca se incluye.
@@ -873,7 +936,7 @@ export default function SettingsPage() {
         <p>
           ArchForge v1.4 · guía interactiva educativa para Arch Linux. Contenido redactado a partir de las prácticas recomendadas de la
           comunidad; Arch Linux es un sistema rolling release, así que los procedimientos concretos pueden evolucionar: cuando dudes,
-          contrasta con <a href="https://wiki.archlinux.org/" target="_blank" rel="noopener noreferrer" className="font-mono text-sky-300 underline decoration-dotted underline-offset-2 transition-colors hover:text-sky-200">wiki.archlinux.org</a>. Esta herramienta no ejecuta comandos ni se
+          contrasta con <a href={resolveExternalUrl('https://wiki.archlinux.org/', proxyCfg)} target="_blank" rel="noopener noreferrer" className="font-mono text-sky-300 underline decoration-dotted underline-offset-2 transition-colors hover:text-sky-200">wiki.archlinux.org</a>. Esta herramienta no ejecuta comandos ni se
           conecta a tu sistema: todo ocurre en tu navegador.
         </p>
       </section>
