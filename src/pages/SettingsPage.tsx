@@ -6,7 +6,7 @@ import Breadcrumbs, { PageHeader } from '../components/Breadcrumbs'
 import { LEVEL_LABEL, LEVEL_RANK } from '../types'
 import type { Level } from '../types'
 import { download, cn } from '../lib/utils'
-import { resolveExternalUrl } from '../lib/proxy'
+import { openExternal, resolveExternalUrl } from '../lib/proxy'
 import { ACCENTS, applyAccent, DEFAULT_ACCENT, loadAccent, saveAccent } from '../lib/accent'
 import type { AccentId } from '../lib/accent'
 import { loadTheme, setTheme } from '../lib/theme'
@@ -36,6 +36,13 @@ export default function SettingsPage() {
   const [appearance, setAppearanceState] = useState<AppearanceConfig>(() => loadAppearance())
   const [proxyCfg, setProxyCfg] = useState<ProxyConfig>(() => loadProxyConfig())
   const proxyActive = isProxyActive(proxyCfg)
+  const [proxyDest, setProxyDest] = useState('')
+
+  const openProxyDest = () => {
+    const dest = proxyDest.trim() || proxyCfg.baseUrl.trim()
+    if (!dest) return
+    openExternal(dest)
+  }
 
   const updateProxy = (patch: Partial<ProxyConfig>) => {
     setProxyCfg((prev) => {
@@ -852,6 +859,39 @@ export default function SettingsPage() {
           <CheckOpt checked={proxyCfg.enabled} onChange={(v) => updateProxy({ enabled: v })}>
             🌐 Usar Proxy para URLs externas
           </CheckOpt>
+        </div>
+
+        <div className="mt-4">
+          <label htmlFor="proxy-dest" className="mb-1.5 block text-xs text-zinc-500">
+            URL destino (para entrar en la web)
+          </label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              id="proxy-dest"
+              type="url"
+              inputMode="url"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="https://wiki.archlinux.org/"
+              value={proxyDest}
+              onChange={(e) => setProxyDest(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') openProxyDest()
+              }}
+              className="w-full max-w-xl rounded-lg border border-zinc-800 bg-ink-950 px-3 py-2 font-mono text-xs text-zinc-200 outline-none transition-colors placeholder:text-zinc-600 focus:border-sky-500/50"
+            />
+            <button
+              onClick={openProxyDest}
+              disabled={!proxyDest.trim() && !proxyCfg.baseUrl.trim()}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-2 text-sm font-medium text-sky-200 transition-colors hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              🌐 Abrir
+            </button>
+          </div>
+          <p className="mt-1.5 max-w-xl text-xs leading-relaxed text-zinc-500">
+            Se abre en pestaña nueva (vía proxy si está activo). También puedes pegar cualquier URL
+            en el buscador global (Ctrl+K).
+          </p>
         </div>
 
         <p className="mt-3 flex items-center gap-2 font-mono text-xs">
