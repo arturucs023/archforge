@@ -6,7 +6,7 @@ import Breadcrumbs, { PageHeader } from '../components/Breadcrumbs'
 import { LEVEL_LABEL, LEVEL_RANK } from '../types'
 import type { Level } from '../types'
 import { download, cn } from '../lib/utils'
-import { openExternal, resolveExternalUrl } from '../lib/proxy'
+import { previewResolvedUrl, resolveExternalUrl } from '../lib/proxy'
 import { ACCENTS, applyAccent, DEFAULT_ACCENT, loadAccent, saveAccent } from '../lib/accent'
 import type { AccentId } from '../lib/accent'
 import { loadTheme, setTheme } from '../lib/theme'
@@ -37,11 +37,11 @@ export default function SettingsPage() {
   const [proxyCfg, setProxyCfg] = useState<ProxyConfig>(() => loadProxyConfig())
   const proxyActive = isProxyActive(proxyCfg)
   const [proxyDest, setProxyDest] = useState('')
+  const previewUrl = previewResolvedUrl(proxyDest, proxyCfg)
 
   const openProxyDest = () => {
-    const dest = proxyDest.trim() || proxyCfg.baseUrl.trim()
-    if (!dest) return
-    openExternal(dest)
+    if (!previewUrl) return
+    window.open(previewUrl, '_blank', 'noopener,noreferrer')
   }
 
   const updateProxy = (patch: Partial<ProxyConfig>) => {
@@ -852,7 +852,8 @@ export default function SettingsPage() {
         />
         <p className="mt-1.5 max-w-xl text-xs leading-relaxed text-zinc-500">
           Para entornos con restricciones de red. Debes proporcionar tu propio endpoint válido;
-          ArchForge no incluye ningún proxy. La URL de destino se concatena al final de esta base.
+          ArchForge no incluye ningún proxy. La URL de destino se concatena al final de esta base
+          (si no termina en / ? = &, se añade una barra automáticamente).
         </p>
 
         <div className="mt-3 flex flex-wrap gap-3">
@@ -882,12 +883,17 @@ export default function SettingsPage() {
             />
             <button
               onClick={openProxyDest}
-              disabled={!proxyDest.trim() && !proxyCfg.baseUrl.trim()}
+              disabled={!previewUrl}
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-2 text-sm font-medium text-sky-200 transition-colors hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-40"
             >
               🌐 Abrir
             </button>
           </div>
+          {previewUrl && (
+            <p className="mt-1.5 max-w-xl truncate font-mono text-[11px] text-zinc-500" title={previewUrl}>
+              → se abrirá: {previewUrl}
+            </p>
+          )}
           <p className="mt-1.5 max-w-xl text-xs leading-relaxed text-zinc-500">
             Se abre en pestaña nueva (vía proxy si está activo). También puedes pegar cualquier URL
             en el buscador global (Ctrl+K).

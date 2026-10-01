@@ -47,7 +47,39 @@ export function resolveExternalUrl(url: string, cfg?: ProxyConfig): string {
   if (!c.enabled) return url
   const base = c.baseUrl.trim()
   if (!base) return url
-  return base + url
+  return joinProxyUrl(base, url)
+}
+
+/** Une base + destino evitando pegotes (x.comhttps://…): si la base no
+    termina en separador (/ ? = &), se inserta una barra. */
+export function joinProxyUrl(base: string, dest: string): string {
+  const b = base.trim()
+  const d = dest.trim()
+  if (!d) return b
+  if (/[\/?=&]$/.test(b)) return b + d
+  return `${b}/${d}`
+}
+
+/** Normaliza un destino tecleado: sin esquema pero con pinta de dominio
+    (x.com, localhost:8080) → se asume https://. */
+export function normalizeDestUrl(dest: string): string {
+  const d = dest.trim()
+  if (!d) return d
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(d)) return d
+  return `https://${d}`
+}
+
+/** URL final que se abriría con un destino dado (para previsualizar y abrir
+    desde Ajustes con una sola fuente de verdad). Sin nada que abrir → null. */
+export function previewResolvedUrl(destInput: string, cfg?: ProxyConfig): string | null {
+  const c = cfg ?? loadProxyConfig()
+  const typed = destInput.trim()
+  const base = c.baseUrl.trim()
+  if (!typed && !base) return null
+  if (!typed) return base
+  const dest = normalizeDestUrl(typed)
+  if (!isProxyActive(c)) return dest
+  return joinProxyUrl(base, dest)
 }
 
 /** Abre una URL externa en pestaña nueva, pasando por el proxy si toca. */
