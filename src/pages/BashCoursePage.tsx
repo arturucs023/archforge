@@ -209,16 +209,19 @@ function ProjectCard({ projectId, done, onToggle }: { projectId: string; done: b
 
 function slugify(s: string): string {
   const map: Record<string, string> = {
-    scripts: 'scripts', shebang: 'scripts', 'chmod +x': 'scripts', echo: 'primeros-comandos',
-    argumentos: 'argumentos', case: 'condicionales', aritmética: 'comillas-expansion',
-    'exit codes': 'exit-codes', stderr: 'operadores-redirecciones', 'arrays/globbing': 'arrays',
-    select: 'menus-select', ps3: 'menus-select', reply: 'menus-select', 'menús': 'menus-select',
-    mapfile: 'mapfile', readarray: 'mapfile',
-    getopts: 'bash-avanzado', find: 'grep', 'grep -rn --': 'grep', 'awk begin/end acumuladores': 'awk',
-    'free/df/ps': 'procesos-curso', 'printf formato': 'primeros-comandos', 'tar czvf + exclude': 'pipes',
-    'mktemp/trap': 'manejo-errores', 'todo el curso': 'bash-avanzado',
+    scripts: 'primer-script', shebang: 'primer-script', 'chmod +x': 'primer-script', echo: 'primer-script',
+    argumentos: 'expansion-aritmetica', case: 'declaraciones-condicionales', aritmética: 'expansion-aritmetica',
+    'exit codes': 'declaraciones-condicionales', stderr: 'primer-script', 'arrays/globbing': 'variables-avanzadas',
+    select: 'bucles-shift-select', ps3: 'bucles-shift-select', reply: 'scripts-interactivos', 'menús': 'bucles-shift-select',
+    mapfile: 'variables-avanzadas', readarray: 'variables-avanzadas',
+    getopts: 'bucles-shift-select', find: 'regex-grep-clases', 'grep -rn --': 'regex-grep-clases', 'awk begin/end acumuladores': 'lenguaje-awk',
+    'free/df/ps': 'primer-script', 'printf formato': 'primer-script', 'tar czvf + exclude': 'registros-automatizacion',
+    'mktemp/trap': 'registros-automatizacion', 'todo el curso': 'registros-automatizacion',
+    variables: 'variables-entorno-local', date: 'primer-script', tee: 'primer-script',
+    grep: 'regex-grep-clases', sed: 'editor-sed', awk: 'lenguaje-awk', pipes: 'primer-script',
+    'exit codes seminar': 'declaraciones-condicionales',
   }
-  return map[s.toLowerCase()] ?? 'variables'
+  return map[s.toLowerCase()] ?? 'variables-entorno-local'
 }
 
 /* ================================ LECCIÓN ================================ */
